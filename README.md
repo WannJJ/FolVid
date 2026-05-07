@@ -191,6 +191,7 @@ Trình duyệt mở `http://localhost:5173` sẽ thấy danh sách video từ ba
 - **Thanh seek thông minh**: Hiển thị thumbnail khi rê chuột.
 - **Phím tắt**: Space (play/pause), ←/→ (tua 5s), M (tắt tiếng).
 - **Hiển thị thời lượng, thời gian hiện tại** của video.
+- **User upload video:** người dùng có thể upload bằng cách browse hoặc drag&drop.
 
 ### Trung hạn
 

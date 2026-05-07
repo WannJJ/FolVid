@@ -38,3 +38,8 @@ coverage/
 
 # Misc
 *.log
+
+
+# Videos folder — DO NOT commit media files
+backend/videos/*
+!backend/videos/.gitkeep
