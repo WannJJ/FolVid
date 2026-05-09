@@ -1,122 +1,139 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect, useRef } from 'react';
+
+const API = 'http://localhost:4000';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [videos, setVideos] = useState([]);
+  const [currentVideo, setCurrentVideo] = useState(null);
+  const videoRef = useRef(null);
+
+  // Lấy danh sách video khi load trang
+  useEffect(() => {
+    fetch(`${API}/api/videos`)
+      .then((res) => res.json())
+      .then((data) => {
+        setVideos(data);
+        // Tự động chọn video đầu tiên nếu có
+        if (data.length > 0) {
+          setCurrentVideo(data[0]);
+        }
+      })
+      .catch((err) => console.error('Lỗi tải danh sách video:', err));
+  }, []);
+
+  const handleSpeedChange = (rate) => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = rate;
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif' }}>
+      {/* Sidebar: Danh sách video */}
+      <aside
+        style={{
+          width: '300px',
+          background: '#1e1e1e',
+          color: '#fff',
+          padding: '20px',
+          overflowY: 'auto',
+          borderRight: '1px solid #333',
+        }}
+      >
+        <h2 style={{ marginTop: 0, fontSize: '1.2rem' }}>📁 FolVid</h2>
+        <p style={{ fontSize: '0.85rem', color: '#aaa' }}>
+          {videos.length} video trong thư mục
+        </p>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {videos.map((v) => (
+            <li
+              key={v}
+              onClick={() => setCurrentVideo(v)}
+              style={{
+                padding: '10px',
+                marginBottom: '8px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                background: currentVideo === v ? '#3b82f6' : '#2a2a2a',
+                transition: 'background 0.2s',
+              }}
+            >
+              🎬 {v}
+            </li>
+          ))}
+        </ul>
+      </aside>
 
-      <div className="ticks"></div>
+      {/* Main: Khu vực phát video */}
+      <main style={{ flex: 1, background: '#000', display: 'flex', flexDirection: 'column' }}>
+        {currentVideo ? (
+          <>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <video
+                ref={videoRef}
+                src={`${API}/videos/${currentVideo}`}
+                controls
+                autoPlay
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '80vh',
+                  outline: 'none',
+                }}
+              />
+            </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
+            {/* Thanh điều khiển tốc độ */}
+            <div
+              style={{
+                padding: '15px 20px',
+                background: '#111',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                borderTop: '1px solid #333',
+              }}
+            >
+              <span style={{ fontSize: '0.9rem', marginRight: '10px' }}>Tốc độ:</span>
+              {[0.5, 1, 1.25, 1.5, 2].map((rate) => (
+                <button
+                  key={rate}
+                  onClick={() => handleSpeedChange(rate)}
+                  style={{
+                    padding: '6px 12px',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    background: '#3b82f6',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                  }}
                 >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+                  {rate}x
+                </button>
+              ))}
+              <span style={{ marginLeft: 'auto', fontSize: '0.85rem', color: '#aaa' }}>
+                Đang phát: {currentVideo}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#666',
+              fontSize: '1.2rem',
+            }}
+          >
+            <p>👈 Chọn một video từ danh sách bên trái</p>
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
