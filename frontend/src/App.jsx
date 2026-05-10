@@ -1,62 +1,182 @@
 import { useState, useEffect, useRef } from 'react';
+import './App.css';
 
 const API = 'http://localhost:4000';
 
 function App() {
   const [videos, setVideos] = useState([]);
   const [currentVideo, setCurrentVideo] = useState(null);
-  const videoRef = useRef(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);      // % của timeline (0-100)
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [speed, setSpeed] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [showControls, setShowControls] = useState(true);
+  const [isLoop, setIsLoop] = useState(false);
 
-  // Lấy danh sách video khi load trang
+  const videoRef = useRef(null);
+  const timelineRef = useRef(null);
+  const controlsTimeoutRef = useRef(null);
+
+  // Tự động đổi title khi chuyển video
+  useEffect(() => {
+    if (currentVideo) {
+      document.title = `▶ ${currentVideo} | FolVid`;
+    } else {
+      document.title = 'FolVid';
+    }
+  }, [currentVideo]);
+
   useEffect(() => {
     fetch(`${API}/api/videos`)
       .then((res) => res.json())
       .then((data) => {
         setVideos(data);
-        // Tự động chọn video đầu tiên nếu có
-        if (data.length > 0) {
-          setCurrentVideo(data[0]);
-        }
-      })
+        if (data.length > 0) setCurrentVideo(data[0]);
+      })  
       .catch((err) => console.error('Lỗi tải danh sách video:', err));
+  }, []);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      }
+      if (e.code === 'ArrowLeft') {
+        videoRef.current.currentTime -= 5;
+      }
+      if (e.code === 'ArrowRight') {
+        videoRef.current.currentTime += 5;
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isPlaying]); // Dependency để togglePlay đọc đúng trạng thái
+
+  // Đóng Speed Menu khi click ngoài
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.speed-box')) {
+        setShowSpeedMenu(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   const handleSpeedChange = (rate) => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = rate;
+    videoRef.current.playbackRate = rate;
+    setPlaybackRate(rate);
+  }
+  };
+
+  const handleSelectVideo = (v) => {
+    setCurrentVideo(v);
+    setSidebarOpen(false); // Đóng sidebar sau khi chọn (trên mobile)
+  };
+
+  // Format giây → "mm:ss" hoặc "hh:mm:ss"
+  const formatTime = (seconds) => {
+    if (isNaN(seconds)) return "0:00";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const mm = m.toString().padStart(2, '0');
+    const ss = s.toString().padStart(2, '0');
+    return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+  };
+
+  // Play / Pause
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
     }
   };
 
+  // Khi video đang chạy, cập nhật thanh timeline
+  const handleTimeUpdate = () => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    const pct = (vid.currentTime / vid.duration) * 100;
+    setProgress(pct);
+    setCurrentTime(vid.currentTime);
+  };
+
+  // Khi load xong video, lấy tổng thời lượng
+  const handleLoadedMeta = () => {
+    setDuration(videoRef.current.duration);
+  };
+
+  // Tua khi click vào thanh timeline
+  const handleSeek = (e) => {
+    const bar = timelineRef.current;
+    if (!bar || !videoRef.current) return;
+    const rect = bar.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    const newTime = pos * videoRef.current.duration;
+    videoRef.current.currentTime = newTime;
+    setProgress(pos * 100);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    handleSeek(e); // Gọi lại hàm tua
+  };
+
+  // Adjust playback speed
+  const changeSpeed = (rate) => {
+    if (!videoRef.current) return;
+    videoRef.current.playbackRate = rate;  // HTML5 Video API
+    setSpeed(rate);
+    setShowSpeedMenu(false); // Chọn xong thì đóng menu
+  };
+
+  // Thay đổi âm lượng
+  const handleVolume = (e) => {
+    const val = parseFloat(e.target.value);
+    videoRef.current.volume = val;
+    setVolume(val);
+  };
+
+  // Loop Function
+  const toggleLoop = () => {
+    if (!videoRef.current) return;
+    const next = !isLoop;
+    videoRef.current.loop = next;   // HTML5 Video API
+    setIsLoop(next);
+  };
+
+
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif' }}>
-      {/* Sidebar: Danh sách video */}
-      <aside
-        style={{
-          width: '300px',
-          background: '#1e1e1e',
-          color: '#fff',
-          padding: '20px',
-          overflowY: 'auto',
-          borderRight: '1px solid #333',
-        }}
-      >
-        <h2 style={{ marginTop: 0, fontSize: '1.2rem' }}>📁 FolVid</h2>
-        <p style={{ fontSize: '0.85rem', color: '#aaa' }}>
-          {videos.length} video trong thư mục
-        </p>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+    <div className="app-container">
+      {/* Overlay để đóng sidebar khi bấm ra ngoài */}
+      <div
+        className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
+      {/* Sidebar */}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <h2>📁 FolVid</h2>
+        <p className="count">{videos.length} video trong thư mục</p>
+        <ul className="video-list">
           {videos.map((v) => (
             <li
               key={v}
-              onClick={() => setCurrentVideo(v)}
-              style={{
-                padding: '10px',
-                marginBottom: '8px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                background: currentVideo === v ? '#3b82f6' : '#2a2a2a',
-                transition: 'background 0.2s',
-              }}
+              onClick={() => handleSelectVideo(v)}  
+              className={`video-item ${currentVideo === v ? 'active' : ''}`}
             >
               🎬 {v}
             </li>
@@ -64,70 +184,147 @@ function App() {
         </ul>
       </aside>
 
-      {/* Main: Khu vực phát video */}
-      <main style={{ flex: 1, background: '#000', display: 'flex', flexDirection: 'column' }}>
+      {/* Main Area */}
+      <main className="main-area">
+
+        {/* Nút hamburger chỉ hiện trên mobile */}
+        <button
+          className="menu-toggle"
+          onClick={() => setSidebarOpen(prev => !prev)}
+          aria-label="Mở/đóng danh sách video"
+        >
+          {sidebarOpen ? '✕' : '☰'}
+        </button>
+
         {currentVideo ? (
           <>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <video
-                ref={videoRef}
-                src={`${API}/videos/${currentVideo}`}
-                controls
-                autoPlay
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '80vh',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            {/* Thanh điều khiển tốc độ */}
-            <div
-              style={{
-                padding: '15px 20px',
-                background: '#111',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                borderTop: '1px solid #333',
+            <div 
+              className="player-wrapper"
+              onMouseMove={() => {
+                setShowControls(true);
+                clearTimeout(controlsTimeoutRef.current);
+                controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
               }}
             >
-              <span style={{ fontSize: '0.9rem', marginRight: '10px' }}>Tốc độ:</span>
+              <video
+                ref={videoRef}
+                src={`${API}/videos/${encodeURIComponent(currentVideo)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
+                autoPlay
+                onTimeUpdate={handleTimeUpdate}      // Cập nhật liên tục khi video chạy
+                onLoadedMetadata={handleLoadedMeta}  // Khi video load xong, lấy duration
+                onClick={togglePlay}                 // Toggle play/pause
+                onRateChange={(e) => setPlaybackRate(e.target.playbackRate)} 
+                className="video-player"
+              />
+              
+              {/* Overlay controls */}
+              <div className={`controls-bar ${showControls ? 'visible' : 'hidden'}`}>
+                
+                {/* Thanh timeline */}
+                <div 
+                  className="timeline-container" 
+                  ref={timelineRef} 
+                  onClick={handleSeek}
+                  onMouseDown={() => setIsDragging(true)}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={() => setIsDragging(false)}
+                  onMouseLeave={() => setIsDragging(false)} 
+                >
+                  <div className="timeline-track">
+                    <div className="timeline-progress" style={{ width: `${progress}%` }} />
+                  </div>
+                  {/* Thumb tròn nhỏ nằm trên đầu progress */}
+                  <div className="timeline-thumb" style={{ left: `${progress}%` }} />
+                </div>
+
+                {/* Hàng nút bên dưới */}
+                <div className="controls-row">
+                  {/* Play/Pause */}
+                  <button className="control-btn" onClick={togglePlay}>
+                    {isPlaying ? '⏸' : '▶'}
+                  </button>
+
+                  {/* Thời gian */}
+                  <span className="time-display">
+                    {formatTime(currentTime)} / {formatTime(duration)}  
+                  </span>
+
+                  {/* Volume */}
+                  <div className="volume-box">
+                    <button className="control-btn" onClick={() => {
+                      const v = volume === 0 ? 1 : 0;
+                      videoRef.current.volume = v;
+                      setVolume(v);
+                    }}>
+                      {volume === 0 ? '🔇' : '🔊'}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={volume}
+                      onChange={handleVolume}
+                      className="volume-slider"
+                    />
+                  </div>
+
+                  <div className="speed-box">
+                    <button 
+                      className="control-btn speed-toggle" 
+                      onClick={() => setShowSpeedMenu(!showSpeedMenu)}
+                      title="Tốc độ phát"
+                    >
+                      {speed}x
+                    </button>
+                    
+                    {showSpeedMenu && (
+                      <div className="speed-menu">
+                        {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                          <div
+                            key={rate}
+                            className={`speed-item ${speed === rate ? 'selected' : ''}`}
+                            onClick={() => changeSpeed(rate)}
+                          >
+                            {rate === 1 ? 'Normal' : `${rate}x`}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>    
+
+                  {/* Loop Button*/}
+                  <button 
+                    className={`control-btn ${isLoop ? 'active' : ''}`} 
+                    onClick={toggleLoop}
+                    title="Lặp lại"
+                  >
+                    🔁
+                  </button>
+
+                </div>
+              </div>
+
+            </div>
+
+            <div className="controls-bar">
+              <span>Tốc độ:</span>
               {[0.5, 1, 1.25, 1.5, 2].map((rate) => (
                 <button
                   key={rate}
                   onClick={() => handleSpeedChange(rate)}
-                  style={{
-                    padding: '6px 12px',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    background: '#3b82f6',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                  }}
+                  className={`speed-btn ${rate === playbackRate ? 'active' : ''}`}
                 >
                   {rate}x
                 </button>
               ))}
-              <span style={{ marginLeft: 'auto', fontSize: '0.85rem', color: '#aaa' }}>
+              <span className="now-playing" title={currentVideo}>
                 Đang phát: {currentVideo}
               </span>
             </div>
           </>
         ) : (
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666',
-              fontSize: '1.2rem',
-            }}
-          >
+          <div className="empty-state">
             <p>👈 Chọn một video từ danh sách bên trái</p>
           </div>
         )}

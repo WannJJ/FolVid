@@ -1,184 +1,454 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+/* ============================================
+   RESET & BASE
+   ============================================ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
 }
 
-#center {
+/* ============================================
+   LAYOUT CHÍNH
+   ============================================ */
+.app-container {
+  display: flex;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #000;
+}
+
+/* ============================================
+   SIDEBAR (Desktop mặc định)
+   ============================================ */
+.sidebar {
+  width: 300px;
+  background: #1e1e1e;
+  color: #fff;
+  padding: 20px;
+  overflow-y: auto;
+  border-right: 1px solid #333;
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
+  flex-shrink: 0;
 }
 
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
 }
 
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+.sidebar .count {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 15px;
 }
 
-#next-steps ul {
+.video-list {
   list-style: none;
-  padding: 0;
+  flex: 1;
+}
+
+.video-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #2a2a2a;
+  transition: background 0.2s;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.video-item:hover {
+  background: #3a3a3a;
+}
+
+.video-item.active {
+  background: #3b82f6;
+}
+
+/* ============================================
+   MAIN AREA & VIDEO
+   ============================================ */
+.main-area {
+  flex: 1;
+  background: #000;
   display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0; /* Quan trọng để flex item không vượt quá container */
+}
+
+.video-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.video-player {
+  max-width: 100%;
+  max-height: calc(100vh - 120px);
+  outline: none;
+  border-radius: 4px;
+}
+
+/* ============================================
+   CONTROLS BAR
+   ============================================ */
+.controls-bar {
+  padding: 12px 20px;
+  background: #111;
+  color: #fff;
+  display: flex;
+  align-items: center;
   gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+  border-top: 1px solid #333;
+  flex-wrap: wrap;
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+.controls-bar > span:first-child {
+  font-size: 0.9rem;
+  margin-right: 4px;
+  white-space: nowrap;
 }
 
-.ticks {
+.speed-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.speed-btn.active{
+  background: #10b981;
+}
+.speed-btn:hover {
+  background: #2563eb;
+}
+
+.now-playing {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 1.2rem;
+  text-align: center;
+  padding: 20px;
+}
+
+/* ============================================
+   MOBILE TOGGLE BUTTON (Hamburger)
+   ============================================ */
+.menu-toggle {
+  display: none; /* Ẩn trên desktop */
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  background: rgba(30, 30, 30, 0.9);
+  border: 1px solid #444;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  backdrop-filter: blur(4px);
+}
+
+.menu-toggle:hover {
+  background: #333;
+}
+
+
+/* Khung bao quanh player */
+.player-wrapper {
   position: relative;
   width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+/* Thanh controls nằm đè ở bottom */
+.controls-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none; /* Khi ẩn thì không chặn click vào video */
+}
 
-  &::before {
+.controls-bar.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ===== TIMELINE ===== */
+.timeline-container {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.timeline-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  position: relative;
+}
+
+.timeline-progress {
+  height: 100%;
+  background: #3b82f6; /* Màu xanh accent */
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.timeline-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+/* Hover vào timeline thì thumb hiện ra và phóng to track */
+.timeline-container:hover .timeline-thumb {
+  opacity: 1;
+}
+.timeline-container:hover .timeline-track {
+  height: 6px;
+}
+
+/* ===== HÀNG NÚT ===== */
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.control-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+.control-btn.active {
+  background: rgba(59, 130, 246, 0.3); /* Xanh nhạt */
+  color: #60a5fa;
+}
+
+.time-display {
+  color: #ddd;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums; /* Giữ số không nhảy */
+  user-select: none;
+}
+
+.speed-box {
+  position: relative;
+}
+
+.speed-toggle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  min-width: 48px;
+}
+
+.speed-menu {
+  position: absolute;
+  bottom: 50px;           /* Nổi lên trên nút */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 6px 0;
+  min-width: 120px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+
+.speed-item {
+  padding: 8px 16px;
+  color: #ddd;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: center;
+}
+
+.speed-item:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.speed-item.selected {
+  color: #60a5fa;         /* Xanh accent */
+  font-weight: 600;
+}
+
+/* ===== VOLUME ===== */
+.volume-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto; /* Đẩy volume sang phải cùng */
+}
+
+.volume-slider {
+  -webkit-appearance: none;
+  width: 80px;
+  height: 4px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* ============================================
+   RESPONSIVE: TABLET & MOBILE (< 900px)
+   ============================================ */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
     left: 0;
-    border-left-color: var(--border);
+    height: 100vh;
+    z-index: 90;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
   }
-  &::after {
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Overlay khi sidebar mở */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     right: 0;
-    border-right-color: var(--border);
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 80;
+  }
+
+  .sidebar-overlay.open {
+    display: block;
+  }
+
+  .menu-toggle {
+    display: block; /* Hiện nút hamburger */
+  }
+
+  .video-player {
+    max-height: calc(100vh - 140px);
+  }
+
+  .now-playing {
+    max-width: 150px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 260px;
+    padding: 15px;
+  }
+
+  .controls-bar {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .speed-btn {
+    padding: 5px 8px;
+    font-size: 0.8rem;
+  }
+
+  .controls-bar > span:first-child {
+    font-size: 0.8rem;
+  }
+
+  .now-playing {
+    font-size: 0.75rem;
+    max-width: 100px;
+  }
+
+  .video-player {
+    max-height: calc(100vh - 150px);
+  }
+
+  .empty-state {
+    font-size: 1rem;
   }
 }
