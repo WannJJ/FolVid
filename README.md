@@ -188,9 +188,9 @@ Trình duyệt mở `http://localhost:5173` sẽ thấy danh sách video từ ba
 ### Ngắn hạn
 
 - **Custom video controls**: Ẩn controls mặc định, tự tạo thanh timeline, nút play/pause đẹp hơn.
-- **Thanh seek thông minh**: Hiển thị thumbnail khi rê chuột.
 - **Phím tắt**: Space (play/pause), ←/→ (tua 5s), M (tắt tiếng).
 - **Hiển thị thời lượng, thời gian hiện tại** của video.
+- **Thanh seek thông minh**: Hiển thị thumbnail khi rê chuột.
 - **User upload video:** người dùng có thể upload bằng cách browse hoặc drag&drop.
 
 ### Trung hạn
@@ -202,9 +202,9 @@ Trình duyệt mở `http://localhost:5173` sẽ thấy danh sách video từ ba
 
 ### Dài hạn
 
+- **Giao diện responsive** tốt trên mobile.
 - **Tìm kiếm & lọc video** theo tên, ngày thêm, định dạng.
 - **Xác thực người dùng** (nếu cần bảo mật truy cập video).
-- **Giao diện responsive** tốt trên mobile.
 - **Chuyển đổi luồng phát** HLS/DASH cho video lớn (tránh tải toàn bộ file).
 - **Triển khai production**: Build frontend, cho backend phục vụ luôn file tĩnh (mọi thứ trên 1 port).
 

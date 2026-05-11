@@ -96,12 +96,13 @@ function App() {
   // Play / Pause
   const togglePlay = () => {
     if (!videoRef.current) return;
+
     if (videoRef.current.paused) {
       videoRef.current.play();
-      setIsPlaying(true);
+      //setIsPlaying(true);   // Không cần setState vì eventListener onPlay sẽ tự làm
     } else {
       videoRef.current.pause();
-      setIsPlaying(false);
+      //setIsPlaying(false);
     }
   };
 
@@ -210,6 +211,8 @@ function App() {
                 ref={videoRef}
                 src={`${API}/videos/${encodeURIComponent(currentVideo)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
                 autoPlay
+                onPlay={() => setIsPlaying(true)}      // Trình duyệt báo để hiện nút Play/Pause cho đúng
+                onPause={() => setIsPlaying(false)}    // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
                 onTimeUpdate={handleTimeUpdate}      // Cập nhật liên tục khi video chạy
                 onLoadedMetadata={handleLoadedMeta}  // Khi video load xong, lấy duration
                 onClick={togglePlay}                 // Toggle play/pause
@@ -241,7 +244,8 @@ function App() {
                 <div className="controls-row">
                   {/* Play/Pause */}
                   <button className="control-btn" onClick={togglePlay}>
-                    {isPlaying ? '⏸' : '▶'}
+                    {/*isPlaying ? '⏸' : '▶'*/}
+                    {videoRef.current && !videoRef.current.paused ? '⏸' : '▶'}
                   </button>
 
                   {/* Thời gian */}
