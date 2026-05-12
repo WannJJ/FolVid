@@ -18,6 +18,9 @@ function App() {
   const [volume, setVolume] = useState(1);
   const [showControls, setShowControls] = useState(true);
   const [isLoop, setIsLoop] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
+  const [tempName, setTempName] = useState(''); // Giá trị tạm trong input
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
@@ -69,6 +72,17 @@ function App() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // Đặt hàm này trong component App, cùng cấp với các hàm xử lý khác
+  const fetchVideoList = async () => {
+    try {
+      const res = await fetch(`${API}/api/videos`);
+      const data = await res.json();
+      setVideos(data);
+    } catch (err) {
+      console.error('Lỗi tải danh sách:', err);
+    }
+  };
 
   const handleSpeedChange = (rate) => {
     if (videoRef.current) {
@@ -159,6 +173,103 @@ function App() {
     setIsLoop(next);
   };
 
+  // Xử lý khi chọn file qua input
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) uploadFile(file);
+
+  };
+  
+  // Hàm xử lý khi kéo thả
+  const handleDropFile = (e) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault(); // Quan trọng: nếu không có dòng này, trình duyệt sẽ mở file thay vì drop
+    setIsDraggingFile(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDraggingFile(false);
+  };
+
+  // Hàm gọi API upload
+  const uploadFile = async (file) => {
+    // Kiểm tra đuôi file có hợp lệ không
+    const validExts = ['.mp4', '.mp3', '.webm', '.ogg', '.mov'];
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+
+    if (!validExts.includes(ext)) {
+      alert('Chỉ chấp nhận file .mp4, .webm, .ogg, .mov');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('video', file); // 'video' phải khớp với upload.single('video')
+
+    try {
+      const res = await fetch(`${API}/api/upload`, {
+        method: 'POST',
+        body: formData, // Không set Content-Type, browser tự set kèm boundary
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Upload thành công: ' + data.filename);
+        
+        await fetchVideoList();
+      } else {
+        alert('Lỗi: ' + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Hàm thay đổi file name
+  const startRename = (filename) => {
+    setEditingName(filename);
+    setTempName(filename);
+  };
+
+  const cancelRename = () => {
+    setEditingName(null);
+    setTempName('');
+  };
+
+  const confirmRename = async (oldName) => {
+    if (!tempName || tempName === oldName) {
+      cancelRename();
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}/api/videos/${encodeURIComponent(oldName)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newName: tempName }),
+      });
+
+      if (res.ok) {
+        // Cập nhật lại danh sách
+        const refreshed = await fetch(`${API}/api/videos`).then(r => r.json());
+        setVideos(refreshed);
+        // Nếu video đang phát bị đổi tên, cập nhật lại currentVideo
+        if (currentVideo === oldName) setCurrentVideo(tempName);
+      } else {
+        const err = await res.json();
+        alert('Lỗi đổi tên: ' + err.error);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setEditingName(null);
+    }
+  };
+
 
   return (
     <div className="app-container">
@@ -176,13 +287,58 @@ function App() {
           {videos.map((v) => (
             <li
               key={v}
-              onClick={() => handleSelectVideo(v)}  
+              //onClick={() => handleSelectVideo(v)}  
               className={`video-item ${currentVideo === v ? 'active' : ''}`}
             >
-              🎬 {v}
+              {editingName === v ? (
+                <>
+                  <input
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') confirmRename(v);
+                      if (e.key === 'Escape') cancelRename();
+                    }}
+                  />
+                  <button onClick={() => confirmRename(v)}>✓</button>
+                  <button onClick={cancelRename}>✕</button>
+                </>
+              ) : (
+                <>
+                  <span onClick={() => handleSelectVideo(v)}>🎬 {v}</span>
+                  <button onClick={() => startRename(v)}>✏️</button>
+                </>
+              )}
             </li>
           ))}
         </ul>
+        
+        <div
+          onDrop={handleDropFile}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          style={{
+            border: isDraggingFile ? '2px dashed #3b82f6' : '2px dashed #555',
+            padding: '20px',
+            textAlign: 'center',
+            marginBottom: '20px',
+            borderRadius: '8px',
+            background: isDraggingFile ? '#1a2f4a' : '#2a2a2a',
+            cursor: 'pointer',
+          }}
+        >
+          <input
+            type="file"
+            accept="video/*"
+            style={{ display: 'none' }}
+            id="fileInput"
+            onChange={handleFileSelect}
+          />
+          <label htmlFor="fileInput" style={{ cursor: 'pointer', color: '#fff' }}>
+            {isDraggingFile ? 'Thả file vào đây' : 'Kéo thả video vào đây, hoặc click để chọn'}
+          </label>
+        </div>
       </aside>
 
       {/* Main Area */}
