@@ -7,7 +7,6 @@ function App() {
   const [videos, setVideos] = useState([]);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [playbackRate, setPlaybackRate] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);      // % của timeline (0-100)
   const [currentTime, setCurrentTime] = useState(0);
@@ -84,12 +83,6 @@ function App() {
     }
   };
 
-  const handleSpeedChange = (rate) => {
-    if (videoRef.current) {
-    videoRef.current.playbackRate = rate;
-    setPlaybackRate(rate);
-  }
-  };
 
   const handleSelectVideo = (v) => {
     setCurrentVideo(v);
@@ -255,8 +248,7 @@ function App() {
 
       if (res.ok) {
         // Cập nhật lại danh sách
-        const refreshed = await fetch(`${API}/api/videos`).then(r => r.json());
-        setVideos(refreshed);
+        await fetchVideoList();
         // Nếu video đang phát bị đổi tên, cập nhật lại currentVideo
         if (currentVideo === oldName) setCurrentVideo(tempName);
       } else {
@@ -331,7 +323,7 @@ function App() {
           <input
             type="file"
             accept="video/*"
-            style={{ display: 'none' }}
+            style={{ display: ' ne' }}
             id="fileInput"
             onChange={handleFileSelect}
           />
@@ -372,7 +364,6 @@ function App() {
                 onTimeUpdate={handleTimeUpdate}      // Cập nhật liên tục khi video chạy
                 onLoadedMetadata={handleLoadedMeta}  // Khi video load xong, lấy duration
                 onClick={togglePlay}                 // Toggle play/pause
-                onRateChange={(e) => setPlaybackRate(e.target.playbackRate)} 
                 className="video-player"
               />
               
@@ -455,32 +446,16 @@ function App() {
 
                   {/* Loop Button*/}
                   <button 
-                    className={`control-btn ${isLoop ? 'active' : ''}`} 
+                    className={`control-btn loop-btn ${isLoop ? 'active' : ''}`} 
                     onClick={toggleLoop}
                     title="Lặp lại"
                   >
-                    🔁
+                    🔄
                   </button>
 
                 </div>
               </div>
 
-            </div>
-
-            <div className="controls-bar">
-              <span>Tốc độ:</span>
-              {[0.5, 1, 1.25, 1.5, 2].map((rate) => (
-                <button
-                  key={rate}
-                  onClick={() => handleSpeedChange(rate)}
-                  className={`speed-btn ${rate === playbackRate ? 'active' : ''}`}
-                >
-                  {rate}x
-                </button>
-              ))}
-              <span className="now-playing" title={currentVideo}>
-                Đang phát: {currentVideo}
-              </span>
             </div>
           </>
         ) : (

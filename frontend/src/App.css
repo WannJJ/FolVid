@@ -120,34 +120,6 @@ html, body, #root {
   white-space: nowrap;
 }
 
-.speed-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background: #3b82f6;
-  color: #fff;
-  font-weight: bold;
-  font-size: 0.85rem;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-.speed-btn.active{
-  background: #10b981;
-}
-.speed-btn:hover {
-  background: #2563eb;
-}
-
-.now-playing {
-  margin-left: auto;
-  font-size: 0.85rem;
-  color: #aaa;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 300px;
-}
 
 /* ============================================
    EMPTY STATE
@@ -290,6 +262,13 @@ html, body, #root {
   background: rgba(59, 130, 246, 0.3); /* Xanh nhạt */
   color: #60a5fa;
 }
+.loop-btn{
+  opacity: 0.2;
+}
+.loop-btn.active{
+  color:red;
+  opacity: 1;
+}
 
 .time-display {
   color: #ddd;
@@ -411,9 +390,6 @@ html, body, #root {
     max-height: calc(100vh - 140px);
   }
 
-  .now-playing {
-    max-width: 150px;
-  }
 }
 
 /* ============================================
@@ -430,19 +406,10 @@ html, body, #root {
     gap: 6px;
   }
 
-  .speed-btn {
-    padding: 5px 8px;
-    font-size: 0.8rem;
-  }
-
   .controls-bar > span:first-child {
     font-size: 0.8rem;
   }
 
-  .now-playing {
-    font-size: 0.75rem;
-    max-width: 100px;
-  }
 
   .video-player {
     max-height: calc(100vh - 150px);
