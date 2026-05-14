@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import ContextMenu, {MenuItem} from "./ContextMenu.jsx";
 import './App.css';
 
 const API = 'http://localhost:4000';
@@ -20,6 +21,13 @@ function App() {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
   const [tempName, setTempName] = useState(''); // Giá trị tạm trong input
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    type: null,      // 'listItem' | 'player'
+    target: null,    // tên file video nếu là listItem
+  });
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
@@ -72,7 +80,19 @@ function App() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Đặt hàm này trong component App, cùng cấp với các hàm xử lý khác
+  useEffect(() => {
+    const handler = (e) => {
+      // Chỉ prevent nếu click vào vùng bạn tự quản lý
+      // Hoặc prevent toàn bộ nếu muốn app kiểu desktop hoàn toàn
+      if (e.target.closest('.sidebar')) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('contextmenu', handler);
+    return () => document.removeEventListener('contextmenu', handler);
+  }, []);
+
+
   const fetchVideoList = async () => {
     try {
       const res = await fetch(`${API}/api/videos`);
@@ -100,16 +120,14 @@ function App() {
     return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
   };
 
-  // Play / Pause
+  // Play / Pause toggle method
   const togglePlay = () => {
     if (!videoRef.current) return;
 
     if (videoRef.current.paused) {
       videoRef.current.play();
-      //setIsPlaying(true);   // Không cần setState vì eventListener onPlay sẽ tự làm
     } else {
-      videoRef.current.pause();
-      //setIsPlaying(false);
+      videoRef.current.pause();s
     }
   };
 
@@ -263,6 +281,8 @@ function App() {
   };
 
 
+
+
   return (
     <div className="app-container">
       {/* Overlay để đóng sidebar khi bấm ra ngoài */}
@@ -280,6 +300,19 @@ function App() {
             <li
               key={v}
               //onClick={() => handleSelectVideo(v)}  
+              onContextMenu = {(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setContextMenu({
+                  visible: true,
+                  x: e.clientX,
+                  y: e.clientY,
+                  type: 'listItem',
+                  target: v,
+                });
+              }
+
+              }
               className={`video-item ${currentVideo === v ? 'active' : ''}`}
             >
               {editingName === v ? (
@@ -353,6 +386,16 @@ function App() {
                 setShowControls(true);
                 clearTimeout(controlsTimeoutRef.current);
                 controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
+              }}
+              onContextMenu = {(e) => {
+                e.preventDefault();
+                setContextMenu({
+                  visible: true,
+                  x: e.clientX,
+                  y: e.clientY,
+                  type: 'player',
+                  target: currentVideo,
+                })
               }}
             >
               <video
@@ -464,6 +507,76 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Custom Context Menu */}
+      <ContextMenu
+        visible={contextMenu.visible && contextMenu.type === 'listItem'}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
+      >
+        <MenuItem
+          icon="▶️"
+          label="Play"
+          onClick={() => {
+            setCurrentVideo(contextMenu.target);
+            setContextMenu((prev) => ({ ...prev, visible: false }));
+          }}
+        />
+        <MenuItem
+          icon="✏️"
+          label="Rename"
+          onClick={() => {
+            // Gọi hàm rename bạn đã có, truyền contextMenu.target
+            handleRename(contextMenu.target);
+            setContextMenu((prev) => ({ ...prev, visible: false }));
+          }}
+        />
+        <MenuItem
+          icon="📋"
+          label="Copy filename"
+          onClick={() => {
+            navigator.clipboard.writeText(contextMenu.target);
+            setContextMenu((prev) => ({ ...prev, visible: false }));
+          }}
+        />
+        <div style={{ borderTop: '1px solid #444', margin: '4px 0' }} />
+        <MenuItem
+          icon="ℹ️"
+          label="Details"
+          onClick={() => {
+            openDetailsModal(contextMenu.target);
+            setContextMenu((prev) => ({ ...prev, visible: false }));
+          }}
+        />
+      </ContextMenu>
+      <ContextMenu
+        visible={contextMenu.visible && contextMenu.type === 'player'}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
+      >
+        <MenuItem
+          icon="🔁"
+          label="Toggle loop"
+          onClick={() => {
+            // Bạn đã có logic loop, ví dụ:
+            // setIsLoop(!isLoop);
+            // videoRef.current.loop = !isLoop;
+            toggleLoop(); // hàm bạn tự cài
+            setContextMenu((prev) => ({ ...prev, visible: false }));
+          }}
+        />
+        <div style={{ borderTop: '1px solid #444', margin: '4px 0' }} />
+        <MenuItem
+          icon="ℹ️"
+          label="Details"
+          onClick={() => {
+            openDetailsModal(contextMenu.target);
+            setContextMenu((prev) => ({ ...prev, visible: false }));
+          }}
+        />
+      </ContextMenu>
     </div>
   );
 }
