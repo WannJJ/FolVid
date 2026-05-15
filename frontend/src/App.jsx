@@ -4,6 +4,18 @@ import './App.css';
 
 const API = 'http://localhost:4000';
 
+function formatTime1(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = String(seconds % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '0 B';
+  const mb = bytes / 1024 / 1024;
+  return mb > 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
+}
+
 function App() {
   const [videos, setVideos] = useState([]);
   const [currentVideo, setCurrentVideo] = useState(null);
@@ -36,7 +48,7 @@ function App() {
   // Tự động đổi title khi chuyển video
   useEffect(() => {
     if (currentVideo) {
-      document.title = `▶ ${currentVideo} | FolVid`;
+      document.title = `▶ ${currentVideo.filename} | FolVid`;
     } else {
       document.title = 'FolVid';
     }
@@ -82,8 +94,7 @@ function App() {
 
   useEffect(() => {
     const handler = (e) => {
-      // Chỉ prevent nếu click vào vùng bạn tự quản lý
-      // Hoặc prevent toàn bộ nếu muốn app kiểu desktop hoàn toàn
+      // Chỉ prevent nếu click vào vùng tự quản lý
       if (e.target.closest('.sidebar')) {
         e.preventDefault();
       }
@@ -127,7 +138,7 @@ function App() {
     if (videoRef.current.paused) {
       videoRef.current.play();
     } else {
-      videoRef.current.pause();s
+      videoRef.current.pause();
     }
   };
 
@@ -268,7 +279,7 @@ function App() {
         // Cập nhật lại danh sách
         await fetchVideoList();
         // Nếu video đang phát bị đổi tên, cập nhật lại currentVideo
-        if (currentVideo === oldName) setCurrentVideo(tempName);
+        if (currentVideo.filename === oldName) setCurrentVideo(tempName);
       } else {
         const err = await res.json();
         alert('Lỗi đổi tên: ' + err.error);
@@ -297,14 +308,14 @@ function App() {
         <p className="count">{videos.length} video trong thư mục</p>
         <ul className="video-list">
           {videos.map((v) => (
-            <li
-              key={v}
+            <li 
+              key={v.filename}
               //onClick={() => handleSelectVideo(v)}  
               onContextMenu = {(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setContextMenu({
-                  visible: true,
+                  visible: true,  
                   x: e.clientX,
                   y: e.clientY,
                   type: 'listItem',
@@ -315,14 +326,20 @@ function App() {
               }
               className={`video-item ${currentVideo === v ? 'active' : ''}`}
             >
-              {editingName === v ? (
+              <img
+                src={`${API}${v.thumb}`}
+                alt=""
+                style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 4 }}
+              />
+
+              {editingName === v.filename ? (
                 <>
                   <input
                     value={tempName}
                     onChange={(e) => setTempName(e.target.value)}
                     autoFocus
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') confirmRename(v);
+                      if (e.key === 'Enter') confirmRename(v.filename);
                       if (e.key === 'Escape') cancelRename();
                     }}
                   />
@@ -331,8 +348,8 @@ function App() {
                 </>
               ) : (
                 <>
-                  <span onClick={() => handleSelectVideo(v)}>🎬 {v}</span>
-                  <button onClick={() => startRename(v)}>✏️</button>
+                  <span onClick={() => handleSelectVideo(v)}>🎬 {v.filename}</span>
+                  <button onClick={() => startRename(v.filename)}>✏️</button>
                 </>
               )}
             </li>
@@ -400,7 +417,7 @@ function App() {
             >
               <video
                 ref={videoRef}
-                src={`${API}/videos/${encodeURIComponent(currentVideo)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
+                src={`${API}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
                 autoPlay
                 onPlay={() => setIsPlaying(true)}      // Trình duyệt báo để hiện nút Play/Pause cho đúng
                 onPause={() => setIsPlaying(false)}    // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
@@ -528,7 +545,7 @@ function App() {
           label="Rename"
           onClick={() => {
             // Gọi hàm rename bạn đã có, truyền contextMenu.target
-            handleRename(contextMenu.target);
+            startRename(contextMenu.target.filename);
             setContextMenu((prev) => ({ ...prev, visible: false }));
           }}
         />

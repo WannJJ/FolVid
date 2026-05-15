@@ -8,6 +8,9 @@ const multer = require('multer'); // middleware để express nhận file từ f
 const app = express();
 const PORT = 4000;
 const VIDEO_DIR = path.join(__dirname, 'videos');
+const CACHE_DIR = path.join(__dirname, 'cache');
+const INFO_DIR = path.join(CACHE_DIR, 'info');
+const THUMB_DIR = path.join(CACHE_DIR, 'thumbs');
 const videoExts = ['.mp4', '.mp3', '.webm', '.ogg', '.mov'];
 
 const storage = multer.diskStorage({
@@ -42,20 +45,27 @@ app.use(cors());
 // Phục vụ file video tĩnh qua URL: http://localhost:4000/videos/ten-file.mp4
 app.use('/videos', express.static(VIDEO_DIR));
 
+// Phục vụ ảnh thumbnail tĩnh
+app.use('/cache/thumbs', express.static(THUMB_DIR));
+
 // API trả về danh sách video trong thư mục videos/
 app.get('/api/videos', (req, res) => {
-  fs.readdir(VIDEO_DIR, (err, files) => {
-    if (err) {
-      console.error('Lỗi đọc thư mục:', err);
-      return res.status(500).json({ error: 'Không đọc được thư mục video' });
+  if (!fs.existsSync(INFO_DIR)) {
+    return res.json([]);
+  }
+
+  const files = fs.readdirSync(INFO_DIR).filter(f => f.endsWith('.json'));
+  
+  const videos = files.map(file => {
+    const infoPath = path.join(INFO_DIR, file);
+    try {
+      return JSON.parse(fs.readFileSync(infoPath, 'utf8'));
+    } catch {
+      return null;
     }
+  }).filter(Boolean); // Lọc bỏ null nếu file JSON bị hỏng
 
-    const videos = files.filter((f) =>
-      videoExts.includes(path.extname(f).toLowerCase())
-    );
-
-    res.json(videos);
-  });
+  res.json(videos);
 });
 
 // Nhận file
@@ -108,8 +118,9 @@ app.put('/api/videos/:filename', express.json(), (req, res) => {
 
 
 app.listen(PORT, () => {
-  console.log(`✅ Backend đang chạy tại http://localhost:${PORT}`);
-  console.log(`📁 Thư mục video: ${VIDEO_DIR}`);
+  console.log(`✅ Backend chạy tại http://localhost:${PORT}`);
+  console.log(`📁 Video: ${VIDEO_DIR}`);
+  console.log(`💡 Nhớ chạy "node scan.js" nếu vừa thêm/xóa/sửa video`);
 });
 
 
