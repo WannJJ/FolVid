@@ -5,6 +5,7 @@ import './App.css';
 const API = 'http://localhost:4000';
 
 function formatTime1(seconds) {
+  if (!seconds || seconds <= 0) return '--:--';
   const m = Math.floor(seconds / 60);
   const s = String(seconds % 60).padStart(2, '0');
   return `${m}:${s}`;
@@ -326,11 +327,21 @@ function App() {
               }
               className={`video-item ${currentVideo === v ? 'active' : ''}`}
             >
-              <img
-                src={`${API}${v.thumb}`}
-                alt=""
-                style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 4 }}
-              />
+              {v.thumb ? (
+                <img
+                  src={`${API}${v.thumb}`}
+                  alt=""
+                  style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 4 }}
+                />
+              ) : (
+                <div style={{
+                  width: 120, height: 68, background: '#333', borderRadius: 4,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 24
+                }}>
+                  {v.filename.endsWith('.mp3') ? '🎵' : '🎬'}
+                </div>
+              )}
 
               {editingName === v.filename ? (
                 <>

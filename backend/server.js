@@ -54,16 +54,43 @@ app.get('/api/videos', (req, res) => {
     return res.json([]);
   }
 
-  const files = fs.readdirSync(INFO_DIR).filter(f => f.endsWith('.json'));
+  // Đọc trực tiếp thư mục videos để biết chính xác file nào đang tồn tại
+  const files = fs.readdirSync(VIDEO_DIR).filter(file => {
+    return videoExts.includes(path.extname(file).toLowerCase());
+  });
   
-  const videos = files.map(file => {
-    const infoPath = path.join(INFO_DIR, file);
-    try {
-      return JSON.parse(fs.readFileSync(infoPath, 'utf8'));
-    } catch {
-      return null;
+   const videos = files.map(file => {
+    const infoPath = path.join(INFO_DIR, file + '.json');
+    const videoPath = path.join(VIDEO_DIR, file);
+
+    // Nếu đã có cache và hợp lệ → dùng cache
+    if (fs.existsSync(infoPath)) {
+      try {
+        const cached = JSON.parse(fs.readFileSync(infoPath, 'utf8'));
+        // Đảm bảo file trong cache đúng là file đang tồn tại (tránh trường hợp rename ngoài ý muốn)
+        if (cached.filename === file) {
+          return cached;
+        }
+      } catch {
+        // Bỏ qua nếu file JSON bị hỏng
+      }
     }
-  }).filter(Boolean); // Lọc bỏ null nếu file JSON bị hỏng
+
+    // Fallback: file chưa có cache (vừa đổi tên, vừa thêm, hoặc chưa chạy scan.js)
+    // Vẫn trả về để client biết và phát được, chỉ thiếu thumbnail/metadata đầy đủ
+    const stat = fs.statSync(videoPath);
+    return {
+      filename: file,
+      url: `/videos/${file}`,
+      thumb: null,
+      width: null,
+      height: null,
+      duration: 0,
+      size: stat.size,
+      bitrate: null,
+      custom: { artist: '', author: '', genre: '' }
+    };
+    });
 
   res.json(videos);
 });

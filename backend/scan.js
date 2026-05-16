@@ -28,7 +28,8 @@ function getVideoMeta(filePath) {
         height: videoStream ? videoStream.height : null,
         duration: metadata.format.duration ? Math.floor(metadata.format.duration) : 0,
         size: metadata.format.size,
-        bitrate: metadata.format.bitrate
+        bitrate: metadata.format.bitrate,
+        hasVideo: !!videoStream,
       });
     });
   });
@@ -139,7 +140,14 @@ async function buildCache() {
       const meta = await getVideoMeta(videoPath);
       
       // Tạo thumbnail
+     let thumbUrl = null;
+
+    // Chỉ tạo thumbnail nếu file có video stream
+    if (meta.hasVideo) {
+      const thumbPath = path.join(THUMB_DIR, file + '.jpg');
       await generateThumb(videoPath, thumbPath, meta.duration);
+      thumbUrl = `/cache/thumbs/${file}.jpg`;
+    }
       
       // Đọc custom metadata
       const custom = getCustomMeta(videoPath);
@@ -153,7 +161,7 @@ async function buildCache() {
         height: meta.height,
         duration: meta.duration,
         bitrate: meta.bitrate,
-        thumb: `/cache/thumbs/${file}.jpg`,
+        thumb: thumbUrl,   // sẽ là null nếu là mp3
         custom
       };
       
