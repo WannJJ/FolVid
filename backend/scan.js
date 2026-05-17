@@ -148,7 +148,7 @@ async function buildCache() {
       await generateThumb(videoPath, thumbPath, meta.duration);
       thumbUrl = `/cache/thumbs/${file}.jpg`;
     }
-      
+
       // Đọc custom metadata
       const custom = getCustomMeta(videoPath);
       

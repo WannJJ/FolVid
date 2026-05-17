@@ -64,23 +64,26 @@ function App() {
       })  
       .catch((err) => console.error('Lỗi tải danh sách video:', err));
   }, []);
+  
+
 
   useEffect(() => {
-    const handleKey = (e) => {
+    const handleKey = (e) => { 
+      if(editingName) return;
       if (e.code === 'Space') {
         e.preventDefault();
         togglePlay();
       }
-      if (e.code === 'ArrowLeft') {
+      if (e.code === 'ArrowLeft' || e.code === 'Numpad4') {
         videoRef.current.currentTime -= 5;
       }
-      if (e.code === 'ArrowRight') {
+      if (e.code === 'ArrowRight' || e.code === 'Numpad6') {
         videoRef.current.currentTime += 5;
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isPlaying]); // Dependency để togglePlay đọc đúng trạng thái
+  }, [isPlaying, editingName]); // Dependency để togglePlay đọc đúng trạng thái
 
   // Đóng Speed Menu khi click ngoài
   useEffect(() => {
@@ -104,7 +107,6 @@ function App() {
     return () => document.removeEventListener('contextmenu', handler);
   }, []);
 
-
   const fetchVideoList = async () => {
     try {
       const res = await fetch(`${API}/api/videos`);
@@ -117,6 +119,7 @@ function App() {
 
 
   const handleSelectVideo = (v) => {
+    if(editingName) return; // handleSelectVideo sẽ không hoạt động nếu đang editing name
     setCurrentVideo(v);
     setSidebarOpen(false); // Đóng sidebar sau khi chọn (trên mobile)
   };
@@ -311,7 +314,7 @@ function App() {
           {videos.map((v) => (
             <li 
               key={v.filename}
-              //onClick={() => handleSelectVideo(v)}  
+              onClick={() => handleSelectVideo(v)}  
               onContextMenu = {(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -359,8 +362,11 @@ function App() {
                 </>
               ) : (
                 <>
-                  <span onClick={() => handleSelectVideo(v)}>🎬 {v.filename}</span>
-                  <button onClick={() => startRename(v.filename)}>✏️</button>
+                  <span 
+                    //onClick={() => handleSelectVideo(v)}
+                  >
+                      🎬 {v.filename}
+                  </span>
                 </>
               )}
             </li>
