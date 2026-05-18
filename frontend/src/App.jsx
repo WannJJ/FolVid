@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import ContextMenu, {MenuItem} from "./ContextMenu.jsx";
+import VideoDetailsModal from './VideoDetailsModal.jsx';
 import './App.css';
 
 const API = 'http://localhost:4000';
@@ -41,6 +42,11 @@ function App() {
     type: null,      // 'listItem' | 'player'
     target: null,    // tên file video nếu là listItem
   });
+  const [detailsModal, setDetailsModal] = useState({
+    open: false,
+    filename: '',
+    details: null,
+  });
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
@@ -64,8 +70,6 @@ function App() {
       })  
       .catch((err) => console.error('Lỗi tải danh sách video:', err));
   }, []);
-  
-
 
   useEffect(() => {
     const handleKey = (e) => { 
@@ -295,6 +299,22 @@ function App() {
     }
   };
 
+  const openDetailsModal = (v) => {
+    setDetailsModal({
+      open: true,
+      filename: v.filename,
+      details: {
+        height: v.height,
+        width: v.width, 
+        size: v.size,
+        duration: v.duration, 
+        artist: v.custom.artist,
+        author: v.custom.author,
+        genre: v.custom.genre,
+      },
+    });
+  };
+
 
 
 
@@ -334,19 +354,67 @@ function App() {
                 <img
                   src={`${API}${v.thumb}`}
                   alt=""
-                  style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 4 }}
+                  style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 4 , border: "1px solid red"}}
                 />
               ) : (
                 <div style={{
                   width: 120, height: 68, background: '#333', borderRadius: 4,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 24
+                  border: '2px solid blue', margin: 'auto',
+                  fontSize: 24,
                 }}>
                   {v.filename.endsWith('.mp3') ? '🎵' : '🎬'}
                 </div>
               )}
 
-              {editingName === v.filename ? (
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {/*<div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {v.filename}
+                </div>  
+                */}
+                {editingName === v.filename ? (
+                  <>
+                    <input
+                      value={tempName}
+                      onChange={(e) => setTempName(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') confirmRename(v.filename);
+                        if (e.key === 'Escape') cancelRename();
+                      }}
+                    />
+                    <button style={{color:'green'}} onClick={() => confirmRename(v)}>✓</button>
+                    <button style={{color:'red'}} onClick={cancelRename}>✕</button>
+                  </>
+                ) : (
+                  <>
+                    <span 
+                      //onClick={() => handleSelectVideo(v)}
+                    >
+                        🎬 {v.filename}
+                    </span>
+                  </>
+                )}
+
+                <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
+                  {formatTime(v.duration)}         
+                  {v.custom.artist && (
+                    <span style={{ fontSize: 11, color: '#4ade80'}}>
+                      &nbsp;•🎤 {v.custom.artist}
+                    </span>
+                  )}
+                  {v.custom.genre && (
+                    <span style={{ fontSize: 11, color: '#fbbf24' }}>
+                      &nbsp;• 🎵 {v.custom.genre}
+                    </span>
+                  )}
+
+                </div>
+                
+                
+              </div>
+
+              {/*editingName === v.filename ? (
                 <>
                   <input
                     value={tempName}
@@ -368,7 +436,8 @@ function App() {
                       🎬 {v.filename}
                   </span>
                 </>
-              )}
+              )*/}
+
             </li>
           ))}
         </ul>
@@ -570,7 +639,7 @@ function App() {
           icon="📋"
           label="Copy filename"
           onClick={() => {
-            navigator.clipboard.writeText(contextMenu.target);
+            navigator.clipboard.writeText(contextMenu.target.filename);
             setContextMenu((prev) => ({ ...prev, visible: false }));
           }}
         />
@@ -611,6 +680,14 @@ function App() {
           }}
         />
       </ContextMenu>
+
+      <VideoDetailsModal
+        isOpen={detailsModal.open}
+        onClose={() => setDetailsModal(prev => ({ ...prev, open: false }))}
+        filename={detailsModal.filename}
+        details={detailsModal.details || {}}
+      />
+
     </div>
   );
 }

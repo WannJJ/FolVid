@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 
+export default function ContextMenu({ visible, x, y, onClose, children }) { 
 
-export default function ContextMenu({ visible, x, y, onClose, children }) {
   const menuRef = useRef(null);
   const {x: finalX, y: finalY} = adjustPosition(x,y);
 
