@@ -125,7 +125,7 @@ export default function VideoDetailsModal({ isOpen, onClose, details, filename }
                             gridColumn: details.width || details.duration ? 'span 1' : 'span 2',
                         }}>
                             <div style={{ fontSize: '1.3rem', marginBottom: '4px' }}>💾</div>
-                            <div style={{ fontWeight: 600 }}>{details.size} MB</div>
+                            <div style={{ fontWeight: 600 }}>{details.size} </div>
                             <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '2px' }}>File Size</div>
                         </div>
                         )}
@@ -160,9 +160,9 @@ export default function VideoDetailsModal({ isOpen, onClose, details, filename }
                         )}
                         </div>
                     </>
-                    )}
+                )}
 
-                
+                {/* Trong trường hợp tất cả các field đều trống */}                
                 {!details.width && !details.height && !details.duration && !details.size && 
                     !details.artist && !details.author && !details.genre && (
                     <div style={{

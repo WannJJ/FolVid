@@ -42,6 +42,7 @@ const upload = multer({
 // Cho phép frontend (chạy ở port khác) gọi API đến backend
 app.use(cors());
 
+
 // Phục vụ file video tĩnh qua URL: http://localhost:4000/videos/ten-file.mp4
 app.use('/videos', express.static(VIDEO_DIR));
 

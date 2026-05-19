@@ -1,16 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import ContextMenu, {MenuItem} from "./ContextMenu.jsx";
 import VideoDetailsModal from './VideoDetailsModal.jsx';
+import VideoListItem from './VideoListItem.jsx';
 import './App.css';
+import { API_BASE_URL } from './config/api.js';
+import { formatTime } from './utils/formatTime.js';
 
-const API = 'http://localhost:4000';
 
-function formatTime1(seconds) {
-  if (!seconds || seconds <= 0) return '--:--';
-  const m = Math.floor(seconds / 60);
-  const s = String(seconds % 60).padStart(2, '0');
-  return `${m}:${s}`;
-}
 
 function formatSize(bytes) {
   if (!bytes) return '0 B';
@@ -62,7 +58,7 @@ function App() {
   }, [currentVideo]);
 
   useEffect(() => {
-    fetch(`${API}/api/videos`)
+    fetch(`${API_BASE_URL}/api/videos`)
       .then((res) => res.json())
       .then((data) => {
         setVideos(data);
@@ -113,7 +109,7 @@ function App() {
 
   const fetchVideoList = async () => {
     try {
-      const res = await fetch(`${API}/api/videos`);
+      const res = await fetch(`${API_BASE_URL}/api/videos`);
       const data = await res.json();
       setVideos(data);
     } catch (err) {
@@ -126,17 +122,6 @@ function App() {
     if(editingName) return; // handleSelectVideo sẽ không hoạt động nếu đang editing name
     setCurrentVideo(v);
     setSidebarOpen(false); // Đóng sidebar sau khi chọn (trên mobile)
-  };
-
-  // Format giây → "mm:ss" hoặc "hh:mm:ss"
-  const formatTime = (seconds) => {
-    if (isNaN(seconds)) return "0:00";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    const mm = m.toString().padStart(2, '0');
-    const ss = s.toString().padStart(2, '0');
-    return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
   };
 
   // Play / Pause toggle method
@@ -242,7 +227,7 @@ function App() {
     formData.append('video', file); // 'video' phải khớp với upload.single('video')
 
     try {
-      const res = await fetch(`${API}/api/upload`, {
+      const res = await fetch(`${API_BASE_URL}/api/upload`, {
         method: 'POST',
         body: formData, // Không set Content-Type, browser tự set kèm boundary
       });
@@ -277,7 +262,7 @@ function App() {
     }
 
     try {
-      const res = await fetch(`${API}/api/videos/${encodeURIComponent(oldName)}`, {
+      const res = await fetch(`${API_BASE_URL}/api/videos/${encodeURIComponent(oldName)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newName: tempName }),
@@ -306,14 +291,15 @@ function App() {
       details: {
         height: v.height,
         width: v.width, 
-        size: v.size,
-        duration: v.duration, 
+        size: formatSize(v.size),
+        duration: formatTime(v.duration), 
         artist: v.custom.artist,
         author: v.custom.author,
         genre: v.custom.genre,
       },
     });
   };
+  
 
 
 
@@ -331,7 +317,7 @@ function App() {
         <h2>📁 FolVid</h2>
         <p className="count">{videos.length} video trong thư mục</p>
         <ul className="video-list">
-          {videos.map((v) => (
+          {/*videos.map((v) => (
             <li 
               key={v.filename}
               onClick={() => handleSelectVideo(v)}  
@@ -345,22 +331,21 @@ function App() {
                   type: 'listItem',
                   target: v,
                 });
-              }
+              }}
 
-              }
               className={`video-item ${currentVideo === v ? 'active' : ''}`}
             >
               {v.thumb ? (
                 <img
-                  src={`${API}${v.thumb}`}
+                  src={`${API_BASE_URL}${v.thumb}`}
                   alt=""
-                  style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 4 , border: "1px solid red"}}
+                  style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 4 }}
                 />
               ) : (
                 <div style={{
                   width: 120, height: 68, background: '#333', borderRadius: 4,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '2px solid blue', margin: 'auto',
+                  margin: 'auto',
                   fontSize: 24,
                 }}>
                   {v.filename.endsWith('.mp3') ? '🎵' : '🎬'}
@@ -368,10 +353,6 @@ function App() {
               )}
 
               <div style={{ flex: 1, minWidth: 0 }}>
-                {/*<div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {v.filename}
-                </div>  
-                */}
                 {editingName === v.filename ? (
                   <>
                     <input
@@ -391,7 +372,7 @@ function App() {
                     <span 
                       //onClick={() => handleSelectVideo(v)}
                     >
-                        🎬 {v.filename}
+                        {v.filename}
                     </span>
                   </>
                 )}
@@ -414,32 +395,33 @@ function App() {
                 
               </div>
 
-              {/*editingName === v.filename ? (
-                <>
-                  <input
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') confirmRename(v.filename);
-                      if (e.key === 'Escape') cancelRename();
-                    }}
-                  />
-                  <button onClick={() => confirmRename(v)}>✓</button>
-                  <button onClick={cancelRename}>✕</button>
-                </>
-              ) : (
-                <>
-                  <span 
-                    //onClick={() => handleSelectVideo(v)}
-                  >
-                      🎬 {v.filename}
-                  </span>
-                </>
-              )*/}
-
             </li>
+          ))*/}
+          {videos.map((v) => (
+            <VideoListItem
+              key={v.filename}
+              v={v}
+              isActive={currentVideo === v}
+              onClick={() => handleSelectVideo(v)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setContextMenu({
+                  visible: true,  
+                  x: e.clientX,
+                  y: e.clientY,
+                  type: 'listItem',
+                  target: v,
+                });
+              }}
+              isEditingName={editingName === v.filename}
+              tempName={tempName}
+              setTempName={setTempName}
+              confirmRename={confirmRename}
+              cancelRename={confirmRename}
+            />
           ))}
+
         </ul>
         
         <div
@@ -503,7 +485,7 @@ function App() {
             >
               <video
                 ref={videoRef}
-                src={`${API}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
+                src={`${API_BASE_URL}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
                 autoPlay
                 onPlay={() => setIsPlaying(true)}      // Trình duyệt báo để hiện nút Play/Pause cho đúng
                 onPause={() => setIsPlaying(false)}    // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
@@ -630,7 +612,6 @@ function App() {
           icon="✏️"
           label="Rename"
           onClick={() => {
-            // Gọi hàm rename bạn đã có, truyền contextMenu.target
             startRename(contextMenu.target.filename);
             setContextMenu((prev) => ({ ...prev, visible: false }));
           }}
@@ -663,10 +644,7 @@ function App() {
           icon="🔁"
           label="Toggle loop"
           onClick={() => {
-            // Bạn đã có logic loop, ví dụ:
-            // setIsLoop(!isLoop);
-            // videoRef.current.loop = !isLoop;
-            toggleLoop(); // hàm bạn tự cài
+            toggleLoop(); 
             setContextMenu((prev) => ({ ...prev, visible: false }));
           }}
         />
