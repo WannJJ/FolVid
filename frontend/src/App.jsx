@@ -256,6 +256,7 @@ function App() {
   };
 
   const confirmRename = async (oldName) => {
+    console.log(tempName, oldName)
     if (!tempName || tempName === oldName) {
       cancelRename();
       return;
@@ -317,86 +318,6 @@ function App() {
         <h2>📁 FolVid</h2>
         <p className="count">{videos.length} video trong thư mục</p>
         <ul className="video-list">
-          {/*videos.map((v) => (
-            <li 
-              key={v.filename}
-              onClick={() => handleSelectVideo(v)}  
-              onContextMenu = {(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setContextMenu({
-                  visible: true,  
-                  x: e.clientX,
-                  y: e.clientY,
-                  type: 'listItem',
-                  target: v,
-                });
-              }}
-
-              className={`video-item ${currentVideo === v ? 'active' : ''}`}
-            >
-              {v.thumb ? (
-                <img
-                  src={`${API_BASE_URL}${v.thumb}`}
-                  alt=""
-                  style={{ width: 120, height: 68, objectFit: 'cover', borderRadius: 4 }}
-                />
-              ) : (
-                <div style={{
-                  width: 120, height: 68, background: '#333', borderRadius: 4,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: 'auto',
-                  fontSize: 24,
-                }}>
-                  {v.filename.endsWith('.mp3') ? '🎵' : '🎬'}
-                </div>
-              )}
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                {editingName === v.filename ? (
-                  <>
-                    <input
-                      value={tempName}
-                      onChange={(e) => setTempName(e.target.value)}
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') confirmRename(v.filename);
-                        if (e.key === 'Escape') cancelRename();
-                      }}
-                    />
-                    <button style={{color:'green'}} onClick={() => confirmRename(v)}>✓</button>
-                    <button style={{color:'red'}} onClick={cancelRename}>✕</button>
-                  </>
-                ) : (
-                  <>
-                    <span 
-                      //onClick={() => handleSelectVideo(v)}
-                    >
-                        {v.filename}
-                    </span>
-                  </>
-                )}
-
-                <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
-                  {formatTime(v.duration)}         
-                  {v.custom.artist && (
-                    <span style={{ fontSize: 11, color: '#4ade80'}}>
-                      &nbsp;•🎤 {v.custom.artist}
-                    </span>
-                  )}
-                  {v.custom.genre && (
-                    <span style={{ fontSize: 11, color: '#fbbf24' }}>
-                      &nbsp;• 🎵 {v.custom.genre}
-                    </span>
-                  )}
-
-                </div>
-                
-                
-              </div>
-
-            </li>
-          ))*/}
           {videos.map((v) => (
             <VideoListItem
               key={v.filename}
@@ -418,7 +339,7 @@ function App() {
               tempName={tempName}
               setTempName={setTempName}
               confirmRename={confirmRename}
-              cancelRename={confirmRename}
+              cancelRename={cancelRename}
             />
           ))}
 
