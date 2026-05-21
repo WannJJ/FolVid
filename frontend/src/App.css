@@ -7,7 +7,9 @@
   padding: 0;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   overflow: hidden;
 }
@@ -18,7 +20,8 @@ html, body, #root {
 .app-container {
   display: flex;
   height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #000;
 }
 
@@ -120,7 +123,6 @@ html, body, #root {
   white-space: nowrap;
 }
 
-
 /* ============================================
    EMPTY STATE
    ============================================ */
@@ -158,7 +160,6 @@ html, body, #root {
   background: #333;
 }
 
-
 /* Khung bao quanh player */
 .player-wrapper {
   position: relative;
@@ -175,7 +176,7 @@ html, body, #root {
   left: 0;
   right: 0;
   padding: 20px;
-  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
   transition: opacity 0.3s ease;
   opacity: 0;
   pointer-events: none; /* Khi ẩn thì không chặn click vào video */
@@ -200,7 +201,7 @@ html, body, #root {
 .timeline-track {
   width: 100%;
   height: 4px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
   position: relative;
 }
@@ -221,7 +222,9 @@ html, body, #root {
   border-radius: 50%;
   transform: translate(-50%, -50%);
   opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
 }
 
 /* Hover vào timeline thì thumb hiện ra và phóng to track */
@@ -256,17 +259,17 @@ html, body, #root {
 }
 
 .control-btn:hover {
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 .control-btn.active {
   background: rgba(59, 130, 246, 0.3); /* Xanh nhạt */
   color: #60a5fa;
 }
-.loop-btn{
+.loop-btn {
   opacity: 0.2;
 }
-.loop-btn.active{
-  color:red;
+.loop-btn.active {
+  color: red;
   opacity: 1;
 }
 
@@ -290,7 +293,7 @@ html, body, #root {
 
 .speed-menu {
   position: absolute;
-  bottom: 50px;           /* Nổi lên trên nút */
+  bottom: 50px; /* Nổi lên trên nút */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(30, 30, 30, 0.95);
@@ -298,7 +301,7 @@ html, body, #root {
   border-radius: 8px;
   padding: 6px 0;
   min-width: 120px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   z-index: 10;
 }
 
@@ -312,11 +315,11 @@ html, body, #root {
 }
 
 .speed-item:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .speed-item.selected {
-  color: #60a5fa;         /* Xanh accent */
+  color: #60a5fa; /* Xanh accent */
   font-weight: 600;
 }
 
@@ -332,7 +335,7 @@ html, body, #root {
   -webkit-appearance: none;
   width: 80px;
   height: 4px;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -359,7 +362,7 @@ html, body, #root {
     z-index: 90;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
   }
 
   .sidebar.open {
@@ -389,7 +392,6 @@ html, body, #root {
   .video-player {
     max-height: calc(100vh - 140px);
   }
-
 }
 
 /* ============================================
@@ -410,7 +412,6 @@ html, body, #root {
     font-size: 0.8rem;
   }
 
-
   .video-player {
     max-height: calc(100vh - 150px);
   }
@@ -421,6 +422,10 @@ html, body, #root {
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

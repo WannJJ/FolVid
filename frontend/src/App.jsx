@@ -1,15 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
-import ContextMenu, {MenuItem} from "./ContextMenu.jsx";
-import VideoDetailsModal from './VideoDetailsModal.jsx';
-import VideoListItem from './VideoListItem.jsx';
-import './App.css';
-import { API_BASE_URL } from './config/api.js';
-import { formatTime } from './utils/formatTime.js';
-
-
+import { useEffect, useRef, useState } from "react";
+import "./App.css";
+import { API_BASE_URL } from "./config/api.js";
+import ContextMenu, { MenuItem } from "./ContextMenu.jsx";
+import { formatTime } from "./utils/formatTime.js";
+import VideoDetailsModal from "./VideoDetailsModal.jsx";
+import VideoListItem from "./VideoListItem.jsx";
 
 function formatSize(bytes) {
-  if (!bytes) return '0 B';
+  if (!bytes) return "0 B";
   const mb = bytes / 1024 / 1024;
   return mb > 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
 }
@@ -19,28 +17,29 @@ function App() {
   const [currentVideo, setCurrentVideo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);      // % của timeline (0-100)
+  const [progress, setProgress] = useState(0); // % của timeline (0-100)
   const [currentTime, setCurrentTime] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [volume, setVolume] = useState(1);
+  const [latestVolume, setLatestVolume] = useState(1);
   const [showControls, setShowControls] = useState(true);
   const [isLoop, setIsLoop] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
-  const [tempName, setTempName] = useState(''); // Giá trị tạm trong input
+  const [tempName, setTempName] = useState(""); // Giá trị tạm trong input
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     x: 0,
     y: 0,
-    type: null,      // 'listItem' | 'player'
-    target: null,    // tên file video nếu là listItem
+    type: null, // 'listItem' | 'player'
+    target: null, // tên file video nếu là listItem
   });
   const [detailsModal, setDetailsModal] = useState({
     open: false,
-    filename: '',
+    filename: "",
     details: null,
   });
 
@@ -53,7 +52,7 @@ function App() {
     if (currentVideo) {
       document.title = `▶ ${currentVideo.filename} | FolVid`;
     } else {
-      document.title = 'FolVid';
+      document.title = "FolVid";
     }
   }, [currentVideo]);
 
@@ -63,48 +62,30 @@ function App() {
       .then((data) => {
         setVideos(data);
         if (data.length > 0) setCurrentVideo(data[0]);
-      })  
-      .catch((err) => console.error('Lỗi tải danh sách video:', err));
+      })
+      .catch((err) => console.error("Lỗi tải danh sách video:", err));
   }, []);
-
-  useEffect(() => {
-    const handleKey = (e) => { 
-      if(editingName) return;
-      if (e.code === 'Space') {
-        e.preventDefault();
-        togglePlay();
-      }
-      if (e.code === 'ArrowLeft' || e.code === 'Numpad4') {
-        videoRef.current.currentTime -= 5;
-      }
-      if (e.code === 'ArrowRight' || e.code === 'Numpad6') {
-        videoRef.current.currentTime += 5;
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isPlaying, editingName]); // Dependency để togglePlay đọc đúng trạng thái
 
   // Đóng Speed Menu khi click ngoài
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest('.speed-box')) {
+      if (!e.target.closest(".speed-box")) {
         setShowSpeedMenu(false);
       }
     };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   useEffect(() => {
     const handler = (e) => {
       // Chỉ prevent nếu click vào vùng tự quản lý
-      if (e.target.closest('.sidebar')) {
+      if (e.target.closest(".sidebar")) {
         e.preventDefault();
       }
     };
-    document.addEventListener('contextmenu', handler);
-    return () => document.removeEventListener('contextmenu', handler);
+    document.addEventListener("contextmenu", handler);
+    return () => document.removeEventListener("contextmenu", handler);
   }, []);
 
   const fetchVideoList = async () => {
@@ -113,13 +94,12 @@ function App() {
       const data = await res.json();
       setVideos(data);
     } catch (err) {
-      console.error('Lỗi tải danh sách:', err);
+      console.error("Lỗi tải danh sách:", err);
     }
   };
 
-
   const handleSelectVideo = (v) => {
-    if(editingName) return; // handleSelectVideo sẽ không hoạt động nếu đang editing name
+    if (editingName) return; // handleSelectVideo sẽ không hoạt động nếu đang editing name
     setCurrentVideo(v);
     setSidebarOpen(false); // Đóng sidebar sau khi chọn (trên mobile)
   };
@@ -134,6 +114,24 @@ function App() {
       videoRef.current.pause();
     }
   };
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (editingName) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        togglePlay();
+      }
+      if (e.code === "ArrowLeft" || e.code === "Numpad4") {
+        videoRef.current.currentTime -= 5;
+      }
+      if (e.code === "ArrowRight" || e.code === "Numpad6") {
+        videoRef.current.currentTime += 5;
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isPlaying, editingName]); // Dependency để togglePlay đọc đúng trạng thái
 
   // Khi video đang chạy, cập nhật thanh timeline
   const handleTimeUpdate = () => {
@@ -168,7 +166,7 @@ function App() {
   // Adjust playback speed
   const changeSpeed = (rate) => {
     if (!videoRef.current) return;
-    videoRef.current.playbackRate = rate;  // HTML5 Video API
+    videoRef.current.playbackRate = rate; // HTML5 Video API
     setSpeed(rate);
     setShowSpeedMenu(false); // Chọn xong thì đóng menu
   };
@@ -178,13 +176,14 @@ function App() {
     const val = parseFloat(e.target.value);
     videoRef.current.volume = val;
     setVolume(val);
+    if (val > 0) setLatestVolume(val);
   };
 
   // Loop Function
   const toggleLoop = () => {
     if (!videoRef.current) return;
     const next = !isLoop;
-    videoRef.current.loop = next;   // HTML5 Video API
+    videoRef.current.loop = next; // HTML5 Video API
     setIsLoop(next);
   };
 
@@ -192,9 +191,8 @@ function App() {
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) uploadFile(file);
-
   };
-  
+
   // Hàm xử lý khi kéo thả
   const handleDropFile = (e) => {
     e.preventDefault();
@@ -215,29 +213,29 @@ function App() {
   // Hàm gọi API upload
   const uploadFile = async (file) => {
     // Kiểm tra đuôi file có hợp lệ không
-    const validExts = ['.mp4', '.mp3', '.webm', '.ogg', '.mov'];
-    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    const validExts = [".mp4", ".mp3", ".webm", ".ogg", ".mov"];
+    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
 
     if (!validExts.includes(ext)) {
-      alert('Chỉ chấp nhận file .mp4, .webm, .ogg, .mov');
+      alert("Chỉ chấp nhận file .mp4, .webm, .ogg, .mov");
       return;
     }
-    
+
     const formData = new FormData();
-    formData.append('video', file); // 'video' phải khớp với upload.single('video')
+    formData.append("video", file); // 'video' phải khớp với upload.single('video')
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/upload`, {
-        method: 'POST',
+        method: "POST",
         body: formData, // Không set Content-Type, browser tự set kèm boundary
       });
       const data = await res.json();
       if (res.ok) {
-        alert('Upload thành công: ' + data.filename);
-        
+        alert("Upload thành công: " + data.filename);
+
         await fetchVideoList();
       } else {
-        alert('Lỗi: ' + data.error);
+        alert("Lỗi: " + data.error);
       }
     } catch (err) {
       console.error(err);
@@ -252,22 +250,25 @@ function App() {
 
   const cancelRename = () => {
     setEditingName(null);
-    setTempName('');
+    setTempName("");
   };
 
   const confirmRename = async (oldName) => {
-    console.log(tempName, oldName)
+    console.log(tempName, oldName);
     if (!tempName || tempName === oldName) {
       cancelRename();
       return;
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/videos/${encodeURIComponent(oldName)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newName: tempName }),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/videos/${encodeURIComponent(oldName)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newName: tempName }),
+        },
+      );
 
       if (res.ok) {
         // Cập nhật lại danh sách
@@ -276,7 +277,7 @@ function App() {
         if (currentVideo.filename === oldName) setCurrentVideo(tempName);
       } else {
         const err = await res.json();
-        alert('Lỗi đổi tên: ' + err.error);
+        alert("Lỗi đổi tên: " + err.error);
       }
     } catch (err) {
       console.error(err);
@@ -291,30 +292,26 @@ function App() {
       filename: v.filename,
       details: {
         height: v.height,
-        width: v.width, 
+        width: v.width,
         size: formatSize(v.size),
-        duration: formatTime(v.duration), 
+        duration: formatTime(v.duration),
         artist: v.custom.artist,
         author: v.custom.author,
         genre: v.custom.genre,
       },
     });
   };
-  
-
-
-
 
   return (
     <div className="app-container">
       {/* Overlay để đóng sidebar khi bấm ra ngoài */}
       <div
-        className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`}
+        className={`sidebar-overlay ${sidebarOpen ? "open" : ""}`}
         onClick={() => setSidebarOpen(false)}
       />
 
       {/* Sidebar */}
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <h2>📁 FolVid</h2>
         <p className="count">{videos.length} video trong thư mục</p>
         <ul className="video-list">
@@ -328,10 +325,10 @@ function App() {
                 e.preventDefault();
                 e.stopPropagation();
                 setContextMenu({
-                  visible: true,  
+                  visible: true,
                   x: e.clientX,
                   y: e.clientY,
-                  type: 'listItem',
+                  type: "listItem",
                   target: v,
                 });
               }}
@@ -342,121 +339,137 @@ function App() {
               cancelRename={cancelRename}
             />
           ))}
-
         </ul>
-        
+
         <div
           onDrop={handleDropFile}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           style={{
-            border: isDraggingFile ? '2px dashed #3b82f6' : '2px dashed #555',
-            padding: '20px',
-            textAlign: 'center',
-            marginBottom: '20px',
-            borderRadius: '8px',
-            background: isDraggingFile ? '#1a2f4a' : '#2a2a2a',
-            cursor: 'pointer',
+            border: isDraggingFile ? "2px dashed #3b82f6" : "2px dashed #555",
+            padding: "20px",
+            textAlign: "center",
+            marginBottom: "20px",
+            borderRadius: "8px",
+            background: isDraggingFile ? "#1a2f4a" : "#2a2a2a",
+            cursor: "pointer",
           }}
         >
           <input
             type="file"
             accept="video/*"
-            style={{ display: ' ne' }}
+            style={{ display: " ne" }}
             id="fileInput"
             onChange={handleFileSelect}
           />
-          <label htmlFor="fileInput" style={{ cursor: 'pointer', color: '#fff' }}>
-            {isDraggingFile ? 'Thả file vào đây' : 'Kéo thả video vào đây, hoặc click để chọn'}
+          <label
+            htmlFor="fileInput"
+            style={{ cursor: "pointer", color: "#fff" }}
+          >
+            {isDraggingFile
+              ? "Thả file vào đây"
+              : "Kéo thả video vào đây, hoặc click để chọn"}
           </label>
         </div>
       </aside>
 
       {/* Main Area */}
       <main className="main-area">
-
         {/* Nút hamburger chỉ hiện trên mobile */}
         <button
           className="menu-toggle"
-          onClick={() => setSidebarOpen(prev => !prev)}
+          onClick={() => setSidebarOpen((prev) => !prev)}
           aria-label="Mở/đóng danh sách video"
         >
-          {sidebarOpen ? '✕' : '☰'}
+          {sidebarOpen ? "✕" : "☰"}
         </button>
 
         {currentVideo ? (
           <>
-            <div 
+            <div
               className="player-wrapper"
               onMouseMove={() => {
                 setShowControls(true);
                 clearTimeout(controlsTimeoutRef.current);
-                controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
+                controlsTimeoutRef.current = setTimeout(
+                  () => setShowControls(false),
+                  3000,
+                );
               }}
-              onContextMenu = {(e) => {
+              onContextMenu={(e) => {
                 e.preventDefault();
                 setContextMenu({
                   visible: true,
                   x: e.clientX,
                   y: e.clientY,
-                  type: 'player',
+                  type: "player",
                   target: currentVideo,
-                })
+                });
               }}
             >
               <video
                 ref={videoRef}
                 src={`${API_BASE_URL}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
                 autoPlay
-                onPlay={() => setIsPlaying(true)}      // Trình duyệt báo để hiện nút Play/Pause cho đúng
-                onPause={() => setIsPlaying(false)}    // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
-                onTimeUpdate={handleTimeUpdate}      // Cập nhật liên tục khi video chạy
-                onLoadedMetadata={handleLoadedMeta}  // Khi video load xong, lấy duration
-                onClick={togglePlay}                 // Toggle play/pause
+                onPlay={() => setIsPlaying(true)} // Trình duyệt báo để hiện nút Play/Pause cho đúng
+                onPause={() => setIsPlaying(false)} // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
+                onTimeUpdate={handleTimeUpdate} // Cập nhật liên tục khi video chạy
+                onLoadedMetadata={handleLoadedMeta} // Khi video load xong, lấy duration
+                onClick={togglePlay} // Toggle play/pause
                 className="video-player"
               />
-              
+
               {/* Overlay controls */}
-              <div className={`controls-bar ${showControls ? 'visible' : 'hidden'}`}>
-                
+              <div
+                className={`controls-bar ${showControls ? "visible" : "hidden"}`}
+              >
                 {/* Thanh timeline */}
-                <div 
-                  className="timeline-container" 
-                  ref={timelineRef} 
+                <div
+                  className="timeline-container"
+                  ref={timelineRef}
                   onClick={handleSeek}
                   onMouseDown={() => setIsDragging(true)}
                   onMouseMove={handleMouseMove}
                   onMouseUp={() => setIsDragging(false)}
-                  onMouseLeave={() => setIsDragging(false)} 
+                  onMouseLeave={() => setIsDragging(false)}
                 >
                   <div className="timeline-track">
-                    <div className="timeline-progress" style={{ width: `${progress}%` }} />
+                    <div
+                      className="timeline-progress"
+                      style={{ width: `${progress}%` }}
+                    />
                   </div>
                   {/* Thumb tròn nhỏ nằm trên đầu progress */}
-                  <div className="timeline-thumb" style={{ left: `${progress}%` }} />
+                  <div
+                    className="timeline-thumb"
+                    style={{ left: `${progress}%` }}
+                  />
                 </div>
 
                 {/* Hàng nút bên dưới */}
                 <div className="controls-row">
                   {/* Play/Pause */}
                   <button className="control-btn" onClick={togglePlay}>
-                    {/*isPlaying ? '⏸' : '▶'*/}
-                    {videoRef.current && !videoRef.current.paused ? '⏸' : '▶'}
+                    {isPlaying ? "⏸" : "▶"}
+                    {/*videoRef.current && !videoRef.current.paused ? "⏸" : "▶"*/}
                   </button>
 
                   {/* Thời gian */}
                   <span className="time-display">
-                    {formatTime(currentTime)} / {formatTime(duration)}  
+                    {formatTime(currentTime)} / {formatTime(duration)}
                   </span>
 
                   {/* Volume */}
                   <div className="volume-box">
-                    <button className="control-btn" onClick={() => {
-                      const v = volume === 0 ? 1 : 0;
-                      videoRef.current.volume = v;
-                      setVolume(v);
-                    }}>
-                      {volume === 0 ? '🔇' : '🔊'}
+                    <button
+                      className="control-btn"
+                      onClick={() => {
+                        const v = volume === 0 ? latestVolume : 0;
+                        videoRef.current.volume = v;
+                        setVolume(v);
+                      }}
+                    >
+                      {volume === 0 ? "🔇" : "🔊"}
                     </button>
                     <input
                       type="range"
@@ -470,41 +483,39 @@ function App() {
                   </div>
 
                   <div className="speed-box">
-                    <button 
-                      className="control-btn speed-toggle" 
+                    <button
+                      className="control-btn speed-toggle"
                       onClick={() => setShowSpeedMenu(!showSpeedMenu)}
                       title="Tốc độ phát"
                     >
                       {speed}x
                     </button>
-                    
+
                     {showSpeedMenu && (
                       <div className="speed-menu">
                         {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                           <div
                             key={rate}
-                            className={`speed-item ${speed === rate ? 'selected' : ''}`}
+                            className={`speed-item ${speed === rate ? "selected" : ""}`}
                             onClick={() => changeSpeed(rate)}
                           >
-                            {rate === 1 ? 'Normal' : `${rate}x`}
+                            {rate === 1 ? "Normal" : `${rate}x`}
                           </div>
                         ))}
                       </div>
                     )}
-                  </div>    
+                  </div>
 
                   {/* Loop Button*/}
-                  <button 
-                    className={`control-btn loop-btn ${isLoop ? 'active' : ''}`} 
+                  <button
+                    className={`control-btn loop-btn ${isLoop ? "active" : ""}`}
                     onClick={toggleLoop}
                     title="Lặp lại"
                   >
                     🔄
                   </button>
-
                 </div>
               </div>
-
             </div>
           </>
         ) : (
@@ -516,7 +527,7 @@ function App() {
 
       {/* Custom Context Menu */}
       <ContextMenu
-        visible={contextMenu.visible && contextMenu.type === 'listItem'}
+        visible={contextMenu.visible && contextMenu.type === "listItem"}
         x={contextMenu.x}
         y={contextMenu.y}
         onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
@@ -545,7 +556,7 @@ function App() {
             setContextMenu((prev) => ({ ...prev, visible: false }));
           }}
         />
-        <div style={{ borderTop: '1px solid #444', margin: '4px 0' }} />
+        <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
         <MenuItem
           icon="ℹ️"
           label="Details"
@@ -556,7 +567,7 @@ function App() {
         />
       </ContextMenu>
       <ContextMenu
-        visible={contextMenu.visible && contextMenu.type === 'player'}
+        visible={contextMenu.visible && contextMenu.type === "player"}
         x={contextMenu.x}
         y={contextMenu.y}
         onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
@@ -565,11 +576,11 @@ function App() {
           icon="🔁"
           label="Toggle loop"
           onClick={() => {
-            toggleLoop(); 
+            toggleLoop();
             setContextMenu((prev) => ({ ...prev, visible: false }));
           }}
         />
-        <div style={{ borderTop: '1px solid #444', margin: '4px 0' }} />
+        <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
         <MenuItem
           icon="ℹ️"
           label="Details"
@@ -582,11 +593,10 @@ function App() {
 
       <VideoDetailsModal
         isOpen={detailsModal.open}
-        onClose={() => setDetailsModal(prev => ({ ...prev, open: false }))}
+        onClose={() => setDetailsModal((prev) => ({ ...prev, open: false }))}
         filename={detailsModal.filename}
         details={detailsModal.details || {}}
       />
-
     </div>
   );
 }
