@@ -199,6 +199,7 @@ Trình duyệt mở `http://localhost:5173` sẽ thấy danh sách video từ ba
 - **Xem thông tin video**: độ phân giải, kích thước file, codec.
 - **Hỗ trợ phụ đề** (WebVTT) nếu có file `.vtt` cùng tên.
 - **Cho phép tạo playlist**, phát liên tiếp.
+- **Lưu lại trạng thái trước đó** (Playback Speed, volume...) vào localStorage.
 
 ### Dài hạn
 
