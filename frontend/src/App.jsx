@@ -17,6 +17,7 @@ function App() {
   const [currentVideo, setCurrentVideo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [progress, setProgress] = useState(0); // % của timeline (0-100)
   const [currentTime, setCurrentTime] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -88,6 +89,19 @@ function App() {
     document.addEventListener("contextmenu", handler);
     return () => document.removeEventListener("contextmenu", handler);
   }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !currentVideo) return;
+
+    video.addEventListener("loadedmetadata", () => {
+      if (currentVideo.filename.endsWith(".mp3") && !currentVideo.thumb) {
+        setIsAudioOnly(true);
+      } else {
+        setIsAudioOnly(false);
+      }
+    });
+  }, [videoRef, currentVideo]);
 
   const fetchVideoList = async () => {
     try {
@@ -445,6 +459,13 @@ function App() {
                 onLoadedMetadata={handleLoadedMeta} // Khi video load xong, lấy duration
                 className={`video-player`}
               />
+
+              {isAudioOnly && (
+                <div className="audio-placeholder">
+                  {/* Hiển thị đơn giản cho file mp3 */}
+                  <div className="audio-visual">🎵 {currentVideo.filename}</div>
+                </div>
+              )}
 
               {/* Overlay controls */}
               <div
