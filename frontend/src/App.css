@@ -123,6 +123,115 @@ body,
   white-space: nowrap;
 }
 
+/*  
+  PLAY/PAUSE FX ANIMATION
+*/
+.fx-overlay {
+  position: "absolute";
+  inset: 0;
+  z-index: 10;
+  pointer-events: "none";
+}
+.fx-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 64px;
+  color: rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+.fx-pop {
+  animation: ripple 0.7s ease-out forwards;
+}
+.fx-forward {
+  animation: slideRightFade 0.6s ease-out forwards;
+}
+.fx-backward {
+  animation: slideLeftFade 0.6s ease-out forwards;
+}
+
+@keyframes popFade {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+@keyframes slideRightFade {
+  0% {
+    transform: translate(-50%, -50%) translateX(-20px);
+    opacity: 0;
+  }
+  30% {
+    transform: translate(-50%, -50%) translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translateX(20px);
+    opacity: 0;
+  }
+}
+@keyframes slideLeftFade {
+  0% {
+    transform: translate(-50%, -50%) translateX(30px);
+    opacity: 0;
+  }
+  30% {
+    transform: translate(-50%, -50%) translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translateX(-30px);
+    opacity: 0;
+  }
+}
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  width: 50px;
+  height: 50px;
+  margin-left: -25px;
+  margin-top: -25px;
+  animation: ripple 0.6s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes flash {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.flash-layer {
+  position: absolute;
+  inset: 0;
+  background: white; /* hoặc đen tùy theme */
+  opacity: 0;
+  pointer-events: none;
+  animation: flash 0.15s ease-out forwards;
+}
+
 /* ============================================
    EMPTY STATE
    ============================================ */

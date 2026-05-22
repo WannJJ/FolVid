@@ -26,6 +26,7 @@ function App() {
   const [volume, setVolume] = useState(1);
   const [latestVolume, setLatestVolume] = useState(1);
   const [showControls, setShowControls] = useState(true);
+  const [fx, setFx] = useState({ type: null, trigger: 0 });
   const [isLoop, setIsLoop] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
@@ -115,24 +116,6 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (editingName) return;
-      if (e.code === "Space") {
-        e.preventDefault();
-        togglePlay();
-      }
-      if (e.code === "ArrowLeft" || e.code === "Numpad4") {
-        videoRef.current.currentTime -= 5;
-      }
-      if (e.code === "ArrowRight" || e.code === "Numpad6") {
-        videoRef.current.currentTime += 5;
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [isPlaying, editingName]); // Dependency để togglePlay đọc đúng trạng thái
-
   // Khi video đang chạy, cập nhật thanh timeline
   const handleTimeUpdate = () => {
     const vid = videoRef.current;
@@ -177,6 +160,12 @@ function App() {
     videoRef.current.volume = val;
     setVolume(val);
     if (val > 0) setLatestVolume(val);
+  };
+
+  const toggleMute = () => {
+    const v = volume === 0 ? latestVolume : 0;
+    videoRef.current.volume = v;
+    setVolume(v);
   };
 
   // Loop Function
@@ -302,6 +291,32 @@ function App() {
     });
   };
 
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (editingName) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        togglePlay();
+      }
+      if (e.code === "ArrowLeft" || e.code === "Numpad4") {
+        videoRef.current.currentTime -= 5;
+        setFx({ type: "backward", trigger: Date.now() });
+      }
+      if (e.code === "ArrowRight" || e.code === "Numpad6") {
+        videoRef.current.currentTime += 5;
+        setFx({ type: "forward", trigger: Date.now() });
+      }
+      if (e.code === "KeyM") {
+        toggleMute();
+      }
+      if (e.code === "KeyL") {
+        toggleLoop();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isPlaying, editingName, toggleMute, toggleLoop]); // Dependency để togglePlay đọc đúng trạng thái
+
   return (
     <div className="app-container">
       {/* Overlay để đóng sidebar khi bấm ra ngoài */}
@@ -387,7 +402,7 @@ function App() {
         {currentVideo ? (
           <>
             <div
-              className="player-wrapper"
+              className={`player-wrapper`}
               onMouseMove={() => {
                 setShowControls(true);
                 clearTimeout(controlsTimeoutRef.current);
@@ -411,12 +426,24 @@ function App() {
                 ref={videoRef}
                 src={`${API_BASE_URL}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
                 autoPlay
-                onPlay={() => setIsPlaying(true)} // Trình duyệt báo để hiện nút Play/Pause cho đúng
-                onPause={() => setIsPlaying(false)} // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
+                onClick={togglePlay} // Toggle play/pause
+                onPlay={() => {
+                  setIsPlaying(true); // Trình duyệt báo để hiện nút Play/Pause cho đúng
+                  setFx({
+                    type: "play",
+                    trigger: Date.now(),
+                  });
+                }}
+                onPause={() => {
+                  setIsPlaying(false); // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
+                  setFx({
+                    type: "pause",
+                    trigger: Date.now(),
+                  });
+                }}
                 onTimeUpdate={handleTimeUpdate} // Cập nhật liên tục khi video chạy
                 onLoadedMetadata={handleLoadedMeta} // Khi video load xong, lấy duration
-                onClick={togglePlay} // Toggle play/pause
-                className="video-player"
+                className={`video-player`}
               />
 
               {/* Overlay controls */}
@@ -461,14 +488,7 @@ function App() {
 
                   {/* Volume */}
                   <div className="volume-box">
-                    <button
-                      className="control-btn"
-                      onClick={() => {
-                        const v = volume === 0 ? latestVolume : 0;
-                        videoRef.current.volume = v;
-                        setVolume(v);
-                      }}
-                    >
+                    <button className="control-btn" onClick={toggleMute}>
                       {volume === 0 ? "🔇" : "🔊"}
                     </button>
                     <input
@@ -515,6 +535,32 @@ function App() {
                     🔄
                   </button>
                 </div>
+              </div>
+
+              {(fx.type === "forward" || fx.type === "backward") && (
+                <div key={fx.trigger} className="flash-layer"></div>
+              )}
+
+              <div className="fx-overlay">
+                {fx.type && (
+                  <div
+                    key={fx.trigger} //Mỗi lần key đổi, React coi đó là phần tử mới → animation CSS sẽ chạy lại từ đầu.
+                    className={`fx-icon ${
+                      fx.type === "play" || fx.type === "pause"
+                        ? "fx-pop"
+                        : fx.type === "forward"
+                          ? "fx-forward"
+                          : fx.type === "backward"
+                            ? "fx-backward"
+                            : ""
+                    } `}
+                  >
+                    {fx.type === "play" && "▶"}
+                    {fx.type === "pause" && "⏸"}
+                    {fx.type === "forward" && "+5s"}
+                    {fx.type === "backward" && "-5s"}
+                  </div>
+                )}
               </div>
             </div>
           </>
