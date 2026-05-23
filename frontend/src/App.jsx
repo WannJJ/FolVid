@@ -29,6 +29,7 @@ function App() {
   const [showControls, setShowControls] = useState(true);
   const [fx, setFx] = useState({ type: null, trigger: 0 });
   const [isLoop, setIsLoop] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
   const [tempName, setTempName] = useState(""); // Giá trị tạm trong input
@@ -47,6 +48,7 @@ function App() {
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
+  const wrapperRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
 
   // Tự động đổi title khi chuyển video
@@ -102,6 +104,21 @@ function App() {
       }
     });
   }, [videoRef, currentVideo]);
+
+  /* Theo dõi trạng thái Fullscreen */
+  useEffect(() => {
+    const handleChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleChange);
+    document.addEventListener("webkitfullscreenchange", handleChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleChange);
+      document.removeEventListener("webkitfullscreenchange", handleChange);
+    };
+  }, []);
 
   const fetchVideoList = async () => {
     try {
@@ -189,6 +206,46 @@ function App() {
     videoRef.current.loop = next; // HTML5 Video API
     setIsLoop(next);
   };
+
+  /*
+  Browser cung cấp API để đưa bất  kỳ element nào vào fullscreen, không chỉ <video>
+  Browser cũng tự cho phép bấm Esc để thoát Fullscreen, không cần implement
+  Chỉ cần implement UseEffect bấm F toggleFullscreen thôi
+  */
+  const toggleFullscreen = async () => {
+    const wrapper = wrapperRef.current; // ref trỏ đến .player-wrapper
+
+    if (!document.fullscreenElement) {
+      // Vào fullscreen
+      if (wrapper.requestFullscreen) {
+        await wrapper.requestFullscreen();
+      } else if (wrapper.webkitRequestFullscreen) {
+        /* Safari */
+        await wrapper.webkitRequestFullscreen();
+      } else if (wrapper.msRequestFullscreen) {
+        /* IE11 */
+        await wrapper.msRequestFullscreen();
+      }
+    } else {
+      // Thoát fullscreen
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        await document.msExitFullscreen();
+      }
+    }
+  };
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "f" || e.key === "F") {
+        toggleFullscreen();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   // Xử lý khi chọn file qua input
   const handleFileSelect = (e) => {
@@ -416,6 +473,7 @@ function App() {
         {currentVideo ? (
           <>
             <div
+              ref={wrapperRef}
               className={`player-wrapper`}
               onMouseMove={() => {
                 setShowControls(true);
@@ -461,9 +519,13 @@ function App() {
               />
 
               {isAudioOnly && (
-                <div className="audio-placeholder">
-                  {/* Hiển thị đơn giản cho file mp3 */}
-                  <div className="audio-visual">🎵 {currentVideo.filename}</div>
+                <div className="audio-visualizer">
+                  <div className="marquee-track">
+                    {/* Hiển thị đơn giản cho file mp3 */}
+                    <span className="marquee-text">
+                      🎵 {currentVideo.filename}
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -497,7 +559,12 @@ function App() {
                 {/* Hàng nút bên dưới */}
                 <div className="controls-row">
                   {/* Play/Pause */}
-                  <button className="control-btn" onClick={togglePlay}>
+                  <button
+                    className="control-btn"
+                    onClick={togglePlay}
+                    aria-label={!isPlaying ? "Play" : "Pause"}
+                    aria-pressed={isPlaying}
+                  >
                     {isPlaying ? "⏸" : "▶"}
                     {/*videoRef.current && !videoRef.current.paused ? "⏸" : "▶"*/}
                   </button>
@@ -509,7 +576,11 @@ function App() {
 
                   {/* Volume */}
                   <div className="volume-box">
-                    <button className="control-btn" onClick={toggleMute}>
+                    <button
+                      className="control-btn"
+                      onClick={toggleMute}
+                      aria-label="volume"
+                    >
                       {volume === 0 ? "🔇" : "🔊"}
                     </button>
                     <input
@@ -528,6 +599,7 @@ function App() {
                       className="control-btn speed-toggle"
                       onClick={() => setShowSpeedMenu(!showSpeedMenu)}
                       title="Tốc độ phát"
+                      aria-label="Playback Speed"
                     >
                       {speed}x
                     </button>
@@ -554,6 +626,36 @@ function App() {
                     title="Lặp lại"
                   >
                     🔄
+                  </button>
+                  <button
+                    className={`control-btn full-screen-btn`}
+                    onClick={toggleFullscreen}
+                    aria-label="Fullscreen"
+                    title="Fullscreen"
+                  >
+                    {isFullscreen ? (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                      </svg>
+                    ) : (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                      </svg>
+                    )}
                   </button>
                 </div>
               </div>
@@ -601,7 +703,7 @@ function App() {
       >
         <MenuItem
           icon="▶️"
-          label="Play"
+          aria-label="Play"
           onClick={() => {
             setCurrentVideo(contextMenu.target);
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -609,7 +711,7 @@ function App() {
         />
         <MenuItem
           icon="✏️"
-          label="Rename"
+          aria-label="Rename"
           onClick={() => {
             startRename(contextMenu.target.filename);
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -617,7 +719,7 @@ function App() {
         />
         <MenuItem
           icon="📋"
-          label="Copy filename"
+          aria-label="Copy filename"
           onClick={() => {
             navigator.clipboard.writeText(contextMenu.target.filename);
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -626,7 +728,7 @@ function App() {
         <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
         <MenuItem
           icon="ℹ️"
-          label="Details"
+          aria-label="Details"
           onClick={() => {
             openDetailsModal(contextMenu.target);
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -641,7 +743,7 @@ function App() {
       >
         <MenuItem
           icon="🔁"
-          label="Toggle loop"
+          aria-label="Toggle loop"
           onClick={() => {
             toggleLoop();
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -650,7 +752,7 @@ function App() {
         <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
         <MenuItem
           icon="ℹ️"
-          label="Details"
+          aria-label="Details"
           onClick={() => {
             openDetailsModal(contextMenu.target);
             setContextMenu((prev) => ({ ...prev, visible: false }));
