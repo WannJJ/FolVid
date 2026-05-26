@@ -13,6 +13,9 @@ const INFO_DIR = path.join(CACHE_DIR, 'info');
 const THUMB_DIR = path.join(CACHE_DIR, 'thumbs');
 const videoExts = ['.mp4', '.mp3', '.webm', '.ogg', '.mov'];
 
+//const app = require('./app');
+//app.listen(PORT, () => console.log(`Backend chạy tại http://localhost:${PORT}`));
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, VIDEO_DIR); // Luôn lưu vào thư mục videos/
@@ -22,7 +25,6 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   }
 });
-
 
 const upload = multer({
   storage: storage, // storage bạn đã cấu hình trước đó
