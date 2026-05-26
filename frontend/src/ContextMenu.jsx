@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-
-export default function ContextMenu({ visible, x, y, onClose, children }) { 
-
+export default function ContextMenu({ visible, x, y, onClose, children }) {
   const menuRef = useRef(null);
-  const {x: finalX, y: finalY} = adjustPosition(x,y);
+  const { x: finalX, y: finalY } = adjustPosition(x, y);
 
   // Đóng khi click ra ngoài
   useEffect(() => {
@@ -17,13 +15,13 @@ export default function ContextMenu({ visible, x, y, onClose, children }) {
     };
 
     // Dùng capture để ăn trước các click khác
-    document.addEventListener('mousedown', handleClick, true);
+    document.addEventListener("mousedown", handleClick, true);
     // Đóng luôn khi scroll để tránh menu trôi lệch
-    document.addEventListener('scroll', onClose, true);
+    document.addEventListener("scroll", onClose, true);
 
     return () => {
-      document.removeEventListener('mousedown', handleClick, true);
-      document.removeEventListener('scroll', onClose, true);
+      document.removeEventListener("mousedown", handleClick, true);
+      document.removeEventListener("scroll", onClose, true);
     };
   }, [visible, onClose]);
 
@@ -33,16 +31,16 @@ export default function ContextMenu({ visible, x, y, onClose, children }) {
     <div
       ref={menuRef}
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: finalY,
         left: finalX,
         zIndex: 9999,
-        background: '#1e1e1e',
-        border: '1px solid #444',
-        borderRadius: '6px',
-        padding: '6px 0',
-        minWidth: '160px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+        background: "#1e1e1e",
+        border: "1px solid #444",
+        borderRadius: "6px",
+        padding: "6px 0",
+        minWidth: "160px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
       }}
     >
       {children}
@@ -50,22 +48,21 @@ export default function ContextMenu({ visible, x, y, onClose, children }) {
   );
 }
 
-
 export function MenuItem({ onClick, label, icon }) {
   return (
     <div
       onClick={onClick}
       style={{
-        padding: '8px 16px',
-        cursor: 'pointer',
-        color: '#eee',
-        fontSize: '0.9rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
+        padding: "8px 16px",
+        cursor: "pointer",
+        color: "#eee",
+        fontSize: "0.9rem",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = '#333')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "#333")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
     >
       <span>{icon}</span>
       <span>{label}</span>

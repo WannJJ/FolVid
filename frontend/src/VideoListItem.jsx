@@ -19,7 +19,7 @@ export default function VideoListItem({
 
   useEffect(() => {
     if (isInView) {
-      // Khi đã lọt vào màn hình, delay 400ms rồi mới hiện tên video
+      // Khi đã lọt vào màn hình, delay 100ms rồi mới hiện tên video
       const timer = setTimeout(() => {
         setShowContent(true);
       }, 100);

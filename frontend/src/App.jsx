@@ -6,6 +6,7 @@ import { formatTime } from "./utils/formatTime.js";
 import VideoDetailsModal from "./VideoDetailsModal.jsx";
 import VideoListItem from "./VideoListItem.jsx";
 
+
 function formatSize(bytes) {
   if (!bytes) return "0 B";
   const mb = bytes / 1024 / 1024;
@@ -638,20 +639,20 @@ function App() {
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        >
                         <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-                      </svg>
+                    </svg>
                     ) : (
                       <svg
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       >
                         <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                       </svg>
@@ -703,7 +704,7 @@ function App() {
       >
         <MenuItem
           icon="▶️"
-          aria-label="Play"
+          label="Play"
           onClick={() => {
             setCurrentVideo(contextMenu.target);
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -711,7 +712,7 @@ function App() {
         />
         <MenuItem
           icon="✏️"
-          aria-label="Rename"
+          label="Rename"
           onClick={() => {
             startRename(contextMenu.target.filename);
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -719,7 +720,7 @@ function App() {
         />
         <MenuItem
           icon="📋"
-          aria-label="Copy filename"
+          label="Copy filename"
           onClick={() => {
             navigator.clipboard.writeText(contextMenu.target.filename);
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -728,7 +729,7 @@ function App() {
         <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
         <MenuItem
           icon="ℹ️"
-          aria-label="Details"
+          label="Details"
           onClick={() => {
             openDetailsModal(contextMenu.target);
             setContextMenu((prev) => ({ ...prev, visible: false }));
@@ -743,16 +744,24 @@ function App() {
       >
         <MenuItem
           icon="🔁"
-          aria-label="Toggle loop"
+          label="Toggle loop"
           onClick={() => {
             toggleLoop();
+            setContextMenu((prev) => ({ ...prev, visible: false }));
+          }}
+        />
+        <MenuItem
+          icon="📋"
+          label="Copy filename"
+          onClick={() => {
+            navigator.clipboard.writeText(contextMenu.target.filename);
             setContextMenu((prev) => ({ ...prev, visible: false }));
           }}
         />
         <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
         <MenuItem
           icon="ℹ️"
-          aria-label="Details"
+          label="Details"
           onClick={() => {
             openDetailsModal(contextMenu.target);
             setContextMenu((prev) => ({ ...prev, visible: false }));
