@@ -5,8 +5,6 @@ import ContextMenu, { MenuItem } from "./ContextMenu.jsx";
 import { formatTime } from "./utils/formatTime.js";
 import VideoDetailsModal from "./VideoDetailsModal.jsx";
 import VideoListItem from "./VideoListItem.jsx";
-
-
 function formatSize(bytes) {
   if (!bytes) return "0 B";
   const mb = bytes / 1024 / 1024;
@@ -16,12 +14,12 @@ function formatSize(bytes) {
 function App() {
   const [videos, setVideos] = useState([]);
   const [currentVideo, setCurrentVideo] = useState(null);
+  const [pendingRestore, setPendingRestore] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [progress, setProgress] = useState(0); // % của timeline (0-100)
   const [currentTime, setCurrentTime] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
@@ -31,6 +29,7 @@ function App() {
   const [fx, setFx] = useState({ type: null, trigger: 0 });
   const [isLoop, setIsLoop] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
   const [tempName, setTempName] = useState(""); // Giá trị tạm trong input
@@ -93,6 +92,7 @@ function App() {
     return () => document.removeEventListener("contextmenu", handler);
   }, []);
 
+  // useEffect khi playing file là mp3
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !currentVideo) return;
@@ -248,6 +248,76 @@ function App() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
+  /* 
+    Lưu trữ current state vào localStorage dùng cho lần bật sau
+    State có dạng như sau:
+    {
+      "filename": "ten-file.mp4",      // Bắt buộc
+      "currentTime": 125.5,            // Vị trí tua (giây)
+      "playbackRate": 1.25,            // Tốc độ
+      "volume": 0.8,                   // Âm lượng 0.0 -> 1.0
+      "muted": false,                  // Có đang tắt tiếng không
+      "loop": false,                   // Có bật loop không
+      "lastUpdated": 1716393600000     // Timestamp (dùng để debug)
+    }
+    Không ghi liên tục, chỉ ghi khi pause, speed change, volume change, end, before unload
+  */
+  const saveState = () => {
+    if (!videoRef.current || !currentVideo) return;
+
+    const state = {
+      filename: currentVideo.filename,
+      currentTime: videoRef.current.currentTime,
+      playbackRate: videoRef.current.playbackRate,
+      volume: videoRef.current.volume,
+      muted: videoRef.current.muted,
+      loop: videoRef.current.loop,
+      lastUpdated: Date.now(),
+    };
+    localStorage.setItem("folvid_player_state", JSON.stringify(state));
+  };
+
+  useEffect(() => {
+    const isReload = sessionStorage.getItem("folvid_tab_initialized");
+
+    if (isReload) {
+      // Đây là reload -> restore từ localStorage
+      const raw = localStorage.getItem("folvid_player_state");
+      if (raw) {
+        const state = JSON.parse(raw);
+        // Kiểm tra xem file có còn trong danh sách không
+
+        if (videos.some((e) => e.filename && e.filename === state.filename)) {
+          setCurrentVideo(state.filename);
+          // Lưu state tạm vào ref hoặc state để gán sau khi video load
+          setPendingRestore(state);
+        }
+      }
+    }
+
+    // Đánh dấu tab này đã từng mở app
+    sessionStorage.setItem("folvid_tab_initialized", "true");
+  }, [videos]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !pendingRestore) return;
+
+    const handleLoaded = () => {
+      //TODO: Use set state
+      video.currentTime = pendingRestore.currentTime;
+      video.playbackRate = pendingRestore.playbackRate;
+      video.volume = pendingRestore.volume;
+      video.muted = pendingRestore.muted;
+      video.loop = pendingRestore.loop;
+      // Nếu muốn auto-play lại thì: video.play();
+      setPendingRestore(null); // Xóa tạm
+    };
+
+    video.addEventListener("loadedmetadata", handleLoaded);
+    return () => video.removeEventListener("loadedmetadata", handleLoaded);
+  }, [currentVideo, pendingRestore]);
+
   // Xử lý khi chọn file qua input
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -303,7 +373,7 @@ function App() {
     }
   };
 
-  // Hàm thay đổi file name
+  // Thay đổi file name
   const startRename = (filename) => {
     setEditingName(filename);
     setTempName(filename);
@@ -509,6 +579,7 @@ function App() {
                 }}
                 onPause={() => {
                   setIsPlaying(false); // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
+                  saveState();
                   setFx({
                     type: "pause",
                     trigger: Date.now(),
@@ -642,9 +713,9 @@ function App() {
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        >
+                      >
                         <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-                    </svg>
+                      </svg>
                     ) : (
                       <svg
                         viewBox="0 0 24 24"
