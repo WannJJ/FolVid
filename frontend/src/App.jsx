@@ -160,6 +160,7 @@ function App() {
   // Khi load xong video, lấy tổng thời lượng
   const handleLoadedMeta = () => {
     setDuration(videoRef.current.duration);
+    saveState();
   };
 
   // Tua khi click vào thanh timeline
@@ -184,6 +185,7 @@ function App() {
     videoRef.current.playbackRate = rate; // HTML5 Video API
     setSpeed(rate);
     setShowSpeedMenu(false); // Chọn xong thì đóng menu
+    saveState();
   };
 
   // Thay đổi âm lượng
@@ -192,12 +194,14 @@ function App() {
     videoRef.current.volume = val;
     setVolume(val);
     if (val > 0) setLatestVolume(val);
+    saveState();
   };
 
   const toggleMute = () => {
     const v = volume === 0 ? latestVolume : 0;
     videoRef.current.volume = v;
     setVolume(v);
+    saveState();
   };
 
   // Loop Function
@@ -206,6 +210,7 @@ function App() {
     const next = !isLoop;
     videoRef.current.loop = next; // HTML5 Video API
     setIsLoop(next);
+    saveState();
   };
 
   /*
@@ -252,9 +257,10 @@ function App() {
     Lưu trữ current state vào localStorage dùng cho lần bật sau
     State có dạng như sau:
     {
-      "filename": "ten-file.mp4",      // Bắt buộc
-      "currentTime": 125.5,            // Vị trí tua (giây)
-      "playbackRate": 1.25,            // Tốc độ
+      "currentVideo": videoObject,     // Có dạng {filename: "", mtime: "", size: "", width: "", height: "" ...}
+      "filename": "ten-file.mp4",      
+      "currentTime": 125.5,            // Dùng để tua (giây)
+      "playbackRate": 1.25,
       "volume": 0.8,                   // Âm lượng 0.0 -> 1.0
       "muted": false,                  // Có đang tắt tiếng không
       "loop": false,                   // Có bật loop không
@@ -266,37 +272,71 @@ function App() {
     if (!videoRef.current || !currentVideo) return;
 
     const state = {
+      currentVideo: currentVideo,
       filename: currentVideo.filename,
-      currentTime: videoRef.current.currentTime,
-      playbackRate: videoRef.current.playbackRate,
-      volume: videoRef.current.volume,
-      muted: videoRef.current.muted,
-      loop: videoRef.current.loop,
+      playbackRate: speed,
+      volume: volume,
+      loop: isLoop,
       lastUpdated: Date.now(),
     };
     localStorage.setItem("folvid_player_state", JSON.stringify(state));
   };
 
+  // Ghi khi pause, tua, đổi tốc độ, đổi volume, tắt tab
   useEffect(() => {
-    const isReload = sessionStorage.getItem("folvid_tab_initialized");
+    const video = videoRef.current;
+    if (!video) return;
 
-    if (isReload) {
-      // Đây là reload -> restore từ localStorage
+    // TODO: Thêm event loop, mute, bỏ bớt seeked
+    const events = ["pause", "seeked", "ratechange", "volumechange"];
+    events.forEach((e) => video.addEventListener(e, saveState));
+
+    const handleBeforeUnload = () => saveState();
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      events.forEach((e) => video.removeEventListener(e, saveState));
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [currentVideo, saveState]);
+
+  useEffect(() => {
+    if (videos.length === 0) return; // Chờ API trả về danh sách trước
+
+    const params = new URLSearchParams(window.location.search);
+    const requestedFileName = params.get("v");
+
+    // Case 1: Có ?v=... trong URL (tab mới được chỉ định mở video cụ thể)
+
+    const requestedVideo = videos.find((e) => e.filename === requestedFileName);
+    if (requestedVideo) {
+      setCurrentVideo(requestedVideo);
+
+      // Kiểm tra xem localStorage có đang lưu chính video này không
+      // Nếu có thì restore luôn state
       const raw = localStorage.getItem("folvid_player_state");
       if (raw) {
         const state = JSON.parse(raw);
-        // Kiểm tra xem file có còn trong danh sách không
-
-        if (videos.some((e) => e.filename && e.filename === state.filename)) {
-          setCurrentVideo(state.filename);
-          // Lưu state tạm vào ref hoặc state để gán sau khi video load
-          setPendingRestore(state);
-        }
+        setPendingRestore(state);
       }
+      return;
     }
 
-    // Đánh dấu tab này đã từng mở app
-    sessionStorage.setItem("folvid_tab_initialized", "true");
+    // // Case 2: URL trắng - Restore thông tin từ localStorage
+    const raw = localStorage.getItem("folvid_player_state");
+    if (!raw) return;
+
+    const state = JSON.parse(raw);
+    // Kiểm tra xem file có còn trong danh sách không
+
+    if (
+      state.currentVideo &&
+      videos.some((e) => e.filename && e.filename === state.filename)
+    ) {
+      setCurrentVideo(state.currentVideo);
+      // Lưu state tạm vào ref hoặc state để gán sau khi video load
+      setPendingRestore(state);
+    }
   }, [videos]);
 
   useEffect(() => {
@@ -304,12 +344,12 @@ function App() {
     if (!video || !pendingRestore) return;
 
     const handleLoaded = () => {
-      //TODO: Use set state
-      video.currentTime = pendingRestore.currentTime;
       video.playbackRate = pendingRestore.playbackRate;
+      setSpeed(pendingRestore.playbackRate);
       video.volume = pendingRestore.volume;
-      video.muted = pendingRestore.muted;
+      setVolume(pendingRestore.volume);
       video.loop = pendingRestore.loop;
+      setIsLoop(pendingRestore.loop);
       // Nếu muốn auto-play lại thì: video.play();
       setPendingRestore(null); // Xóa tạm
     };
@@ -385,7 +425,6 @@ function App() {
   };
 
   const confirmRename = async (oldName) => {
-    console.log(tempName, oldName);
     if (!tempName || tempName === oldName) {
       cancelRename();
       return;
@@ -782,6 +821,16 @@ function App() {
           }}
         />
         <MenuItem
+          icon="▶️"
+          label="Play New Tab"
+          onClick={() => {
+            const video = contextMenu.target;
+            const filename = video.filename;
+            const url = `/?v=${encodeURIComponent(filename)}`;
+            window.open(url, "_blank", "noopener,noreferrer");
+          }}
+        />
+        <MenuItem
           icon="✏️"
           label="Rename"
           onClick={() => {
@@ -807,6 +856,7 @@ function App() {
           }}
         />
       </ContextMenu>
+
       <ContextMenu
         visible={contextMenu.visible && contextMenu.type === "player"}
         x={contextMenu.x}
