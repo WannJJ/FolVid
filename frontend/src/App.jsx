@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import { API_BASE_URL } from "./config/api.js";
 import ContextMenu, { MenuItem } from "./ContextMenu.jsx";
@@ -29,6 +29,15 @@ function App() {
   const [fx, setFx] = useState({ type: null, trigger: 0 });
   const [isLoop, setIsLoop] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({
+    genre: "",
+    artist: "",
+    minDuration: "",
+    maxDuration: "",
+    resolution: "",
+  });
+  const [showFilters, setShowFilters] = useState(false); // đóng/mở panel
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
@@ -136,6 +145,56 @@ function App() {
     setCurrentVideo(v);
     setSidebarOpen(false); // Đóng sidebar sau khi chọn (trên mobile)
   };
+
+  // Tạo list filtered Videos
+  const filteredVideos = useMemo(() => {
+    return videos.filter((v) => {
+      // 1. Search theo tên, title, artist
+      const q = search.toLowerCase();
+      const matchSearch =
+        !q ||
+        v.filename.toLowerCase().includes(q) ||
+        (v.filename && v.filename.toLowerCase().includes(q)) ||
+        (v.custom.artist && v.custom.artist.toLowerCase().includes(q));
+
+      // 2. Filter dropdown
+      const matchGenre = !filters.genre || v.custom.genre === filters.genre;
+      const matchArtist = !filters.artist || v.custom.artist === filters.artist;
+      const matchRes =
+        !filters.resolution || `${v.width}x${v.height}` === filters.resolution;
+
+      // 3. Filter duration (đổi phút -> giây để so sánh)
+      const min = filters.minDuration ? parseInt(filters.minDuration) * 60 : 0;
+      const max = filters.maxDuration
+        ? parseInt(filters.maxDuration) * 60
+        : Infinity;
+      const dur = v.duration || 0;
+      const matchDuration = dur >= min && dur <= max;
+
+      return (
+        matchSearch && matchGenre && matchArtist && matchRes && matchDuration
+      );
+    });
+  }, [videos, search, filters]);
+
+  const genres = useMemo(() => {
+    const set = new Set(videos.map((v) => v.custom.genre).filter(Boolean));
+    return ["", ...Array.from(set).sort()];
+  }, [videos]);
+
+  const artists = useMemo(() => {
+    const set = new Set(videos.map((v) => v.custom.artist).filter(Boolean));
+    return ["", ...Array.from(set).sort()];
+  }, [videos]);
+
+  const resolutions = useMemo(() => {
+    const set = new Set(
+      videos
+        .map((v) => (v.width && v.height ? `${v.width}x${v.height}` : null))
+        .filter(Boolean),
+    );
+    return ["", ...Array.from(set).sort()];
+  }, [videos]);
 
   // Play / Pause toggle method
   const togglePlay = () => {
@@ -510,8 +569,230 @@ function App() {
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <h2>📁 FolVid</h2>
         <p className="count">{videos.length} video trong thư mục</p>
+
+        {/* ===== SEARCH BAR ===== */}
+        <div style={{ marginBottom: "12px" }}>
+          <input
+            type="text"
+            placeholder="🔍 Tìm theo tên, nghệ sĩ..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: "8px",
+              border: "1px solid #444",
+              background: "#2a2a2a",
+              color: "#fff",
+              fontSize: "0.9rem",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+        {/* ===== FILTER PANEL (Accordion) ===== */}
+        <div style={{ marginBottom: "16px" }}>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              width: "100%",
+              textAlign: "left",
+              background: "transparent",
+              border: "none",
+              color: "#aaa",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              padding: "4px 0",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span>⚙️ Bộ lọc nâng cao</span>
+            <span>{showFilters ? "▲" : "▼"}</span>
+          </button>
+
+          {showFilters && (
+            <div
+              style={{
+                marginTop: "8px",
+                padding: "12px",
+                background: "#252525",
+                borderRadius: "8px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              {/* Genre */}
+              <div>
+                <label style={{ color: "#888", fontSize: "0.8rem" }}>
+                  Thể loại
+                </label>
+                <select
+                  value={filters.genre}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, genre: e.target.value }))
+                  }
+                  style={{
+                    width: "100%",
+                    marginTop: "4px",
+                    padding: "6px",
+                    background: "#1e1e1e",
+                    color: "#fff",
+                    border: "1px solid #444",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {genres.map((g) => (
+                    <option key={g} value={g}>
+                      {g || "— Tất cả —"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Artist */}
+              <div>
+                <label style={{ color: "#888", fontSize: "0.8rem" }}>
+                  Nghệ sĩ
+                </label>
+                <select
+                  value={filters.artist}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, artist: e.target.value }))
+                  }
+                  style={{
+                    width: "100%",
+                    marginTop: "4px",
+                    padding: "6px",
+                    background: "#1e1e1e",
+                    color: "#fff",
+                    border: "1px solid #444",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {artists.map((a) => (
+                    <option key={a} value={a}>
+                      {a || "— Tất cả —"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Duration Range */}
+              <div style={{ display: "flex", gap: "8px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: "#888", fontSize: "0.8rem" }}>
+                    Min (phút)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={filters.minDuration}
+                    onChange={(e) =>
+                      setFilters((f) => ({ ...f, minDuration: e.target.value }))
+                    }
+                    style={{
+                      width: "100%",
+                      marginTop: "4px",
+                      padding: "6px",
+                      background: "#1e1e1e",
+                      color: "#fff",
+                      border: "1px solid #444",
+                      borderRadius: "4px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ color: "#888", fontSize: "0.8rem" }}>
+                    Max (phút)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={filters.maxDuration}
+                    onChange={(e) =>
+                      setFilters((f) => ({ ...f, maxDuration: e.target.value }))
+                    }
+                    style={{
+                      width: "100%",
+                      marginTop: "4px",
+                      padding: "6px",
+                      background: "#1e1e1e",
+                      color: "#fff",
+                      border: "1px solid #444",
+                      borderRadius: "4px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Resolution */}
+              <div>
+                <label style={{ color: "#888", fontSize: "0.8rem" }}>
+                  Độ phân giải
+                </label>
+                <select
+                  value={filters.resolution}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, resolution: e.target.value }))
+                  }
+                  style={{
+                    width: "100%",
+                    marginTop: "4px",
+                    padding: "6px",
+                    background: "#1e1e1e",
+                    color: "#fff",
+                    border: "1px solid #444",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {resolutions.map((r) => (
+                    <option key={r} value={r}>
+                      {r || "— Tất cả —"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Nút xóa filter */}
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setFilters({
+                    genre: "",
+                    artist: "",
+                    minDuration: "",
+                    maxDuration: "",
+                    resolution: "",
+                  });
+                }}
+                style={{
+                  marginTop: "4px",
+                  padding: "8px",
+                  background: "#ef4444",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                }}
+              >
+                ✕ Xóa bộ lọc
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ===== DANH SÁCH VIDEO ===== */}
+        <p style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "12px" }}>
+          {filteredVideos.length} / {videos.length} video
+        </p>
         <ul className="video-list">
-          {videos.map((v) => (
+          {filteredVideos.map((v) => (
             <VideoListItem
               key={v.filename}
               v={v}
