@@ -533,7 +533,18 @@ function App() {
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (editingName) return;
+      const active = document.activeElement;
+      const tag = active?.tagName;
+      const isEditable = active?.isContentEditable;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        isEditable
+      ) {
+        return;
+      }
+
       if (e.code === "Space") {
         e.preventDefault();
         togglePlay();
@@ -555,7 +566,7 @@ function App() {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [isPlaying, editingName, toggleMute, toggleLoop]); // Dependency để togglePlay đọc đúng trạng thái
+  }, [isPlaying, toggleMute, toggleLoop]); // Dependency để togglePlay đọc đúng trạng thái
 
   return (
     <div className="app-container">
