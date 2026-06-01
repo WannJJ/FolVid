@@ -578,6 +578,133 @@ body,
 }
 
 /* ============================================
+   CUSTOM CONTEXT MENU
+   ============================================ */
+.context-menu {
+  position: fixed;
+  z-index: 9999;
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 6px 0;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.menu-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #eee;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================
+   VIDEO DETAILS MODAL
+   ============================================ */
+.details-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.details-modal-wrapper {
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  color: #eee;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.2s ease-out;
+}
+.details-modal-wrapper .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+}
+.details-modal-wrapper .title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.details-modal-wrapper .title-group .filename {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.details-modal-wrapper .close-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.details-modal-wrapper .close-btn:hover {
+  color: #fff;
+}
+
+.details-modal {
+  padding: 20px;
+}
+.details-modal .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.details-modal .stat-card {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.details-modal-wrapper .divider {
+  border-top: 1px solid #333;
+  margin: 0 20px;
+}
+.details-modal-wrapper .meta-section {
+  padding: 16px 20px 20px;
+}
+.details-modal-wrapper .meta-section .meta-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.details-modal-wrapper .meta-section .info-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.details-modal-wrapper .empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: #666;
+}
+
+/* ============================================
    RESPONSIVE: TABLET & MOBILE (< 900px)
    ============================================ */
 @media (max-width: 900px) {

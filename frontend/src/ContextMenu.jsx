@@ -30,17 +30,10 @@ export default function ContextMenu({ visible, x, y, onClose, children }) {
   return (
     <div
       ref={menuRef}
+      className="context-menu"
       style={{
-        position: "fixed",
         top: finalY,
         left: finalX,
-        zIndex: 9999,
-        background: "#1e1e1e",
-        border: "1px solid #444",
-        borderRadius: "6px",
-        padding: "6px 0",
-        minWidth: "160px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
       }}
     >
       {children}
@@ -51,16 +44,8 @@ export default function ContextMenu({ visible, x, y, onClose, children }) {
 export function MenuItem({ onClick, label, icon }) {
   return (
     <div
+      className="menu-item"
       onClick={onClick}
-      style={{
-        padding: "8px 16px",
-        cursor: "pointer",
-        color: "#eee",
-        fontSize: "0.9rem",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-      }}
       onMouseEnter={(e) => (e.currentTarget.style.background = "#333")}
       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
     >
