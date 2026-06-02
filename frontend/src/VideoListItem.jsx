@@ -36,56 +36,23 @@ export default function VideoListItem({
     >
       {showContent ? (
         <>
-          <div
-            style={{
-              position: "relative",
-              width: 120,
-              height: 68,
-              borderRadius: 4,
-              margin: "auto",
-              overflow: "hidden",
-            }}
-          >
+          <div className="thumb-wrap">
             {v.thumb ? (
               <img
+                className="thumb-image"
                 src={`${API_BASE_URL}${v.thumb}`}
                 alt=""
                 loading="lazy"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  background: "#333",
-                  fontSize: 24,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <div className="thumb-fallback">
                 {v.filename.endsWith(".mp3") ? "🎵" : "🎬"}
               </div>
             )}
-            <div
-              style={{
-                position: "absolute",
-                right: 0,
-                bottom: 0,
-                margin: 5,
-                borderRadius: 2,
-                background: "rgba(0.1,0.1,0.1,0.2)",
-                lineHeight: 1,
-                fontSize: "10",
-                color: "#ccc",
-              }}
-            >
-              {formatTime(v.duration)}
-            </div>
+            <div className="duration">{formatTime(v.duration)}</div>
           </div>
 
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="info">
             {isEditingName ? (
               <>
                 <input
@@ -98,12 +65,12 @@ export default function VideoListItem({
                   }}
                 />
                 <button
-                  style={{ color: "green" }}
+                  className="action-btn confirm"
                   onClick={() => confirmRename(v.filename)}
                 >
                   ✓
                 </button>
-                <button style={{ color: "red" }} onClick={cancelRename}>
+                <button className="action-btn cancel" onClick={cancelRename}>
                   ✕
                 </button>
               </>
@@ -116,16 +83,7 @@ export default function VideoListItem({
         </>
       ) : (
         // Skeleton placeholder
-        <div
-          style={{
-            width: "80%",
-            height: "16px",
-            background: "linear-gradient(90deg, #333 25%, #444 50%, #333 75%)",
-            backgroundSize: "200% 100%",
-            animation: "shimmer 1.5s infinite",
-            borderRadius: "4px",
-          }}
-        />
+        <div className="skeleton" />
       )}
     </li>
   );
