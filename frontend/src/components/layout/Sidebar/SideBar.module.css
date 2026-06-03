@@ -1,0 +1,60 @@
+.sidebar {
+  width: 300px;
+  background: #1e1e1e;
+  color: #fff;
+  padding: 20px;
+  overflow-y: auto;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+.sidebar .count {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 90;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Overlay khi sidebar mở */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 80;
+  }
+
+  .sidebar-overlay.open {
+    display: block;
+  }
+
+  .menu-toggle {
+    display: block; /* Hiện nút hamburger */
+  }
+}
