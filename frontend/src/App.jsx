@@ -2,14 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import { API_BASE_URL } from "./config/api.js";
 import ContextMenu, { MenuItem } from "./ContextMenu.jsx";
+import { formatSize } from "./utils/formatSize";
 import { formatTime } from "./utils/formatTime.js";
 import VideoDetailsModal from "./VideoDetailsModal.jsx";
 import VideoListItem from "./VideoListItem.jsx";
-function formatSize(bytes) {
-  if (!bytes) return "0 B";
-  const mb = bytes / 1024 / 1024;
-  return mb > 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
-}
 
 function App() {
   const [videos, setVideos] = useState([]);
