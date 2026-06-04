@@ -2,6 +2,7 @@ import { API_BASE_URL } from "@/config/api";
 import { formatTime } from "@/utils/formatTime";
 import { useEffect, useState } from "react";
 import { useInView } from "../hooks/useInView";
+import styles from "./VideoListItem.module.css";
 
 export default function VideoListItem({
   v,
@@ -32,27 +33,27 @@ export default function VideoListItem({
       ref={ref}
       onClick={onClick}
       onContextMenu={onContextMenu}
-      className={`video-item ${isActive ? "active" : ""}`}
+      className={`${styles.videoItem} ${isActive ? styles.active : ""}`}
     >
       {showContent ? (
         <>
-          <div className="thumb-wrap">
+          <div className={styles.thumbWrap}>
             {v.thumb ? (
               <img
-                className="thumb-image"
+                className={styles.thumbImage}
                 src={`${API_BASE_URL}${v.thumb}`}
                 alt=""
                 loading="lazy"
               />
             ) : (
-              <div className="thumb-fallback">
+              <div className={styles.thumbFallback}>
                 {v.filename.endsWith(".mp3") ? "🎵" : "🎬"}
               </div>
             )}
-            <div className="duration">{formatTime(v.duration)}</div>
+            <div className={styles.duration}>{formatTime(v.duration)}</div>
           </div>
 
-          <div className="info">
+          <div className={styles.info}>
             {isEditingName ? (
               <>
                 <input
@@ -65,12 +66,15 @@ export default function VideoListItem({
                   }}
                 />
                 <button
-                  className="action-btn confirm"
+                  className={`${styles.actionBtn} ${styles.confirm}`}
                   onClick={() => confirmRename(v.filename)}
                 >
                   ✓
                 </button>
-                <button className="action-btn cancel" onClick={cancelRename}>
+                <button
+                  className={`${styles.actionBtn} ${styles.cancel}`}
+                  onClick={cancelRename}
+                >
                   ✕
                 </button>
               </>
@@ -83,7 +87,7 @@ export default function VideoListItem({
         </>
       ) : (
         // Skeleton placeholder
-        <div className="skeleton" />
+        <div className={styles.skeleton} />
       )}
     </li>
   );

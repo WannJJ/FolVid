@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import { API_BASE_URL } from "./config/api.js";
 import ContextMenu, { MenuItem } from "./ContextMenu.jsx";
+import VideoList from "./features/video-list/components/VideoList";
+import VideoListItem from "./features/video-list/components/VideoListItem";
 import { formatSize } from "./utils/formatSize";
 import { formatTime } from "./utils/formatTime.js";
 import VideoDetailsModal from "./VideoDetailsModal.jsx";
-import VideoListItem from "./VideoListItem.jsx";
 
 function App() {
   const [videos, setVideos] = useState([]);
@@ -597,6 +598,7 @@ function App() {
             }}
           />
         </div>
+
         {/* ===== FILTER PANEL (Accordion) ===== */}
         <div style={{ marginBottom: "16px" }}>
           <button
@@ -798,7 +800,7 @@ function App() {
         <p style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "12px" }}>
           {filteredVideos.length} / {videos.length} video
         </p>
-        <ul className="video-list">
+        <VideoList>
           {filteredVideos.map((v) => (
             <VideoListItem
               key={v.filename}
@@ -823,8 +825,9 @@ function App() {
               cancelRename={cancelRename}
             />
           ))}
-        </ul>
+        </VideoList>
 
+        {/* ===== DRAG & DROP ===== */}
         <div
           onDrop={handleDropFile}
           onDragOver={handleDragOver}
