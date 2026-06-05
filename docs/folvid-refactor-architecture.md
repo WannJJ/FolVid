@@ -194,11 +194,11 @@ folvid-frontend/
 
 ### 3.4. `utils/` vs `features/xxx/utils/`
 
-| `src/utils/` | `features/xxx/utils/` |
-|---|---|
-| Dùng ở ≥ 2 features | Chỉ dùng trong 1 feature |
-| Pure function, không import từ feature | Có thể import types từ feature |
-| Ví dụ: `formatTime`, `debounce` | Ví dụ: `calculateBuffered` (dùng `TimeRanges` của HTMLVideoElement) |
+| `src/utils/`                           | `features/xxx/utils/`                                               |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| Dùng ở ≥ 2 features                    | Chỉ dùng trong 1 feature                                            |
+| Pure function, không import từ feature | Có thể import types từ feature                                      |
+| Ví dụ: `formatTime`, `debounce`        | Ví dụ: `calculateBuffered` (dùng `TimeRanges` của HTMLVideoElement) |
 
 ---
 
@@ -210,11 +210,11 @@ FolVid sử dụng **3 tầng state** kết hợp. Đây là quyết định ki�
 
 **Dùng cho:** UI tạm thời, không cần chia sẻ.
 
-| State | Vị trí | Lý do |
-|---|---|---|
-| `isHovering` trên 1 list item | `VideoListItem` | Chỉ item đó cần biết |
-| `isMenuOpen` của 1 dropdown nhỏ | Component con | Scope cục bộ |
-| Input value trước khi submit | `SearchBar` | Chưa cần đồng bộ ra ngoài |
+| State                                  | Vị trí               | Lý do                                                               |
+| -------------------------------------- | -------------------- | ------------------------------------------------------------------- |
+| `isHovering` trên 1 list item          | `VideoListItem`      | Chỉ item đó cần biết                                                |
+| `isMenuOpen` của 1 dropdown nhỏ        | Component con        | Scope cục bộ                                                        |
+| Input value trước khi submit           | `SearchBar`          | Chưa cần đồng bộ ra ngoài                                           |
 | `currentTime` của video (render 60fps) | `Timeline` component | Dùng `useRef` + `requestAnimationFrame`, KHÔNG dùng Zustand/Context |
 
 > ⚠️ **Cấm kỵ:** Đừng để `currentTime` (cập nhật liên tục) nằm trong Zustand hoặc Context global. Nó sẽ trigger re-render toàn bộ app 60 lần/giây.
@@ -238,6 +238,7 @@ features/video-player/
 ```
 
 **Tại sao dùng Context ở đây mà không phải Zustand?**
+
 - Scope giới hạn: chỉ các component bên trong `VideoPlayer` mới truy cập được.
 - Khi unmount `VideoPlayer` (chuyển sang trang khác), state tự động cleanup.
 - Không làm ô nhiễm global store.
@@ -305,6 +306,7 @@ features/video-player/
 ```
 
 **Tại sao dùng Zustand thay vì Context cho global?**
+
 - Không bị "Provider Hell" (không cần bao bọc nhiều lớp).
 - Selector tối ưu: component chỉ re-render khi state nó subscribe thay đổi.
 - Persist middleware dễ dàng (lưu volume, theme vào localStorage).
@@ -338,13 +340,13 @@ Project phân biệt rõ 3 loại hook để tránh nhầm lẫn:
 
 Dùng ở bất kỳ đâu. Không import từ `features/`.
 
-| Hook | Mục đích |
-|---|---|
-| `useDebounce(value, delay)` | Trì hoãn cập nhật giá trị (search input) |
-| `useLocalStorage(key, defaultValue)` | Sync state ↔ localStorage |
-| `useClickOutside(ref, callback)` | Đóng dropdown/menu khi click ngoài |
-| `useMediaQuery(query)` | Responsive: `useMediaQuery('(max-width: 768px)')` |
-| `usePrevious(value)` | Giữ giá trị trước của prop/state |
+| Hook                                 | Mục đích                                          |
+| ------------------------------------ | ------------------------------------------------- |
+| `useDebounce(value, delay)`          | Trì hoãn cập nhật giá trị (search input)          |
+| `useLocalStorage(key, defaultValue)` | Sync state ↔ localStorage                         |
+| `useClickOutside(ref, callback)`     | Đóng dropdown/menu khi click ngoài                |
+| `useMediaQuery(query)`               | Responsive: `useMediaQuery('(max-width: 768px)')` |
+| `usePrevious(value)`                 | Giữ giá trị trước của prop/state                  |
 
 ### 5.2. Feature Hooks (`features/xxx/hooks/`)
 
@@ -352,32 +354,32 @@ Chỉ dùng trong feature đó. Có thể import từ `services/`, `stores/`, `u
 
 #### `features/video-player/hooks/`
 
-| Hook | Trách nhiệm |
-|---|---|
-| `useVideoPlayer(videoRef)` | ⭐ **Core hook**: khởi tạo ref, đăng ký event listeners (`timeupdate`, `progress`, `loadedmetadata`, `ended`, `error`), trả về `{ isPlaying, duration, currentTime, buffered, play, pause, seek, setVolume, setPlaybackRate }` |
-| `useTimeline(videoRef)` | Tính toán buffered segments, vị trí preview khi hover, tính % seek |
-| `useKeyboardShortcuts(actions)` | Đăng ký `keydown`/`keyup` trên `window`, mapping phím → hành động. Cleanup khi unmount. |
-| `useFullscreen(elementRef)` | Wrap Fullscreen API với fallback. Trả về `{ isFullscreen, enter, exit, toggle }` |
+| Hook                            | Trách nhiệm                                                                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `useVideoPlayer(videoRef)`      | ⭐ **Core hook**: khởi tạo ref, đăng ký event listeners (`timeupdate`, `progress`, `loadedmetadata`, `ended`, `error`), trả về `{ isPlaying, duration, currentTime, buffered, play, pause, seek, setVolume, setPlaybackRate }` |
+| `useTimeline(videoRef)`         | Tính toán buffered segments, vị trí preview khi hover, tính % seek                                                                                                                                                             |
+| `useKeyboardShortcuts(actions)` | Đăng ký `keydown`/`keyup` trên `window`, mapping phím → hành động. Cleanup khi unmount.                                                                                                                                        |
+| `useFullscreen(elementRef)`     | Wrap Fullscreen API với fallback. Trả về `{ isFullscreen, enter, exit, toggle }`                                                                                                                                               |
 
 #### `features/video-list/hooks/`
 
-| Hook | Trách nhiệm |
-|---|---|
-| `useVideoList()` | Gọi `videoApi.getList()`, trả về `{ videos, isLoading, error, refetch }`. Nếu dùng TanStack Query, hook này wrap `useQuery`. |
-| `useSearchFilter(videos, filters)` | Pure function hook: nhận danh sách gốc + filters, trả về `filteredVideos`. Không side effect. |
-| `useRename()` | Mutation: gọi `videoApi.rename()`, tự động `refetch` danh sách hoặc optimistic update. Trả về `{ rename, isRenaming, error }` |
+| Hook                               | Trách nhiệm                                                                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `useVideoList()`                   | Gọi `videoApi.getList()`, trả về `{ videos, isLoading, error, refetch }`. Nếu dùng TanStack Query, hook này wrap `useQuery`.  |
+| `useSearchFilter(videos, filters)` | Pure function hook: nhận danh sách gốc + filters, trả về `filteredVideos`. Không side effect.                                 |
+| `useRename()`                      | Mutation: gọi `videoApi.rename()`, tự động `refetch` danh sách hoặc optimistic update. Trả về `{ rename, isRenaming, error }` |
 
 #### `features/video-actions/hooks/`
 
-| Hook | Trách nhiệm |
-|---|---|
-| `useContextMenu()` | Trả về `{ anchor, isOpen, open(event, items), close() }`. Tính toán vị trí để menu không tràn ra ngoài viewport. |
-| `useVideoDetails(videoId)` | Gọi `videoApi.getDetails(videoId)`, trả về metadata. Dùng `useQuery` để cache. |
+| Hook                       | Trách nhiệm                                                                                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `useContextMenu()`         | Trả về `{ anchor, isOpen, open(event, items), close() }`. Tính toán vị trí để menu không tràn ra ngoài viewport. |
+| `useVideoDetails(videoId)` | Gọi `videoApi.getDetails(videoId)`, trả về metadata. Dùng `useQuery` để cache.                                   |
 
 #### `features/upload/hooks/`
 
-| Hook | Trách nhiệm |
-|---|---|
+| Hook          | Trách nhiệm                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `useUpload()` | Nhận `File[]`, tạo `FormData`, gọi `uploadApi.upload()` với `onUploadProgress`, quản lý `AbortController`. Cập nhật `useUploadStore`. |
 
 ### 5.3. Nguyên tắc viết Hook
@@ -452,6 +454,7 @@ User chọn file / kéo thả
 ### 7.1. Import Path Alias
 
 `vite.config.js`:
+
 ```js
 resolve: {
   alias: {
@@ -461,11 +464,12 @@ resolve: {
 ```
 
 Sử dụng:
+
 ```js
-import { Button } from '@/components/ui';
-import { VideoPlayer } from '@/features/video-player';
-import { useDebounce } from '@/hooks/useDebounce';
-import { videoApi } from '@/services/videoApi';
+import { Button } from "@/components/ui";
+import { VideoPlayer } from "@/features/video-player";
+import { useDebounce } from "@/hooks/useDebounce";
+import { videoApi } from "@/services/videoApi";
 ```
 
 **Cấm:** Không dùng relative path vượt quá 2 cấp (`../../`). Nếu thấy `../../../`, đó là dấu hiệu cần refactor hoặc dùng alias.
@@ -476,12 +480,12 @@ Mỗi feature, mỗi folder `components/ui/`, `hooks/`, `utils/` đều có `ind
 
 ```js
 // features/video-player/index.js
-export { VideoPlayer } from './components/VideoPlayer';
+export { VideoPlayer } from "./components/VideoPlayer";
 
 // features/video-player/components/index.js
-export { VideoPlayer } from './VideoPlayer';
-export { VideoCanvas } from './VideoCanvas';
-export { Timeline } from './Timeline';
+export { VideoPlayer } from "./VideoPlayer";
+export { VideoCanvas } from "./VideoCanvas";
+export { Timeline } from "./Timeline";
 // ...
 ```
 
@@ -489,23 +493,23 @@ Lợi ích: Import gọn, dễ refactor tên file bên trong.
 
 ### 7.3. File Naming
 
-| Loại | Quy ước | Ví dụ |
-|---|---|---|
-| Component | PascalCase + `.jsx` | `VideoPlayer.jsx`, `PlayPauseButton.jsx` |
-| Hook | camelCase + `use` prefix | `useVideoPlayer.js`, `useDebounce.js` |
-| Utility | camelCase | `formatTime.js`, `sanitizeFilename.js` |
-| Store | camelCase + `use` + `Store` | `usePlayerStore.js` |
-| Style module | PascalCase + `.module.css` | `VideoPlayer.module.css` |
-| Feature folder | kebab-case | `video-player/`, `video-actions/` |
+| Loại           | Quy ước                     | Ví dụ                                    |
+| -------------- | --------------------------- | ---------------------------------------- |
+| Component      | PascalCase + `.jsx`         | `VideoPlayer.jsx`, `PlayPauseButton.jsx` |
+| Hook           | camelCase + `use` prefix    | `useVideoPlayer.js`, `useDebounce.js`    |
+| Utility        | camelCase                   | `formatTime.js`, `sanitizeFilename.js`   |
+| Store          | camelCase + `use` + `Store` | `usePlayerStore.js`                      |
+| Style module   | PascalCase + `.module.css`  | `VideoPlayer.module.css`                 |
+| Feature folder | kebab-case                  | `video-player/`, `video-actions/`        |
 
 ### 7.4. Giới hạn kích thước file
 
-| Loại file | Giới hạn | Nếu vượt quá |
-|---|---|---|
-| Component | 200 dòng | Tách thành sub-components |
-| Hook | 250 dòng | Tách thành 2+ hooks chuyên biệt |
-| Store (Zustand) | 150 dòng | Tách thành nhiều store nhỏ hơn |
-| Utility | 100 dòng | Tách thành các hàm riêng |
+| Loại file       | Giới hạn | Nếu vượt quá                    |
+| --------------- | -------- | ------------------------------- |
+| Component       | 200 dòng | Tách thành sub-components       |
+| Hook            | 250 dòng | Tách thành 2+ hooks chuyên biệt |
+| Store (Zustand) | 150 dòng | Tách thành nhiều store nhỏ hơn  |
+| Utility         | 100 dòng | Tách thành các hàm riêng        |
 
 ---
 
@@ -514,30 +518,36 @@ Lợi ích: Import gọn, dễ refactor tên file bên trong.
 **Đừng refactor toàn bộ 1 lúc.** Làm theo từng bước, test kỹ sau mỗi bước.
 
 ### Giai đoạn 1: Dựng khung (1-2 ngày)
+
 1. Tạo folder structure mới (chưa di chuyển code, chỉ tạo folder trống).
 2. Cấu hình Vite alias `@/`.
 3. Viết barrel export `index.js` cho các folder.
 
 ### Giai đoạn 2: Tách App.jsx (2-3 ngày)
+
 1. Tách `AppLayout` ra khỏi `App.jsx`.
 2. Tách `Sidebar` và `MainContent` thành layout components.
 3. `App.jsx` chỉ còn ~30-50 dòng.
 
 ### Giai đoạn 3: Tách Player (3-4 ngày)
+
 1. Viết `useVideoPlayer` hook — chuyển toàn bộ logic player từ App.jsx vào đây.
 2. Tách các nút controls thành component con (`PlayPauseButton`, `Timeline`, v.v.).
 3. Tạo `PlayerContext` nội bộ nếu cần truyền data giữa controls.
 
 ### Giai đoạn 4: Tách List & Actions (2-3 ngày)
+
 1. Chuyển `VideoList`, `VideoListItem`, `SearchBar`, `FilterBar` vào `features/video-list/`.
 2. Chuyển `ContextMenu`, `VideoDetailsModal`, `RenameModal` vào `features/video-actions/`.
 3. Viết `useUIStore` để quản lý modal & context menu global.
 
 ### Giai đoạn 5: Tách Upload (1-2 ngày)
+
 1. Chuyển logic upload vào `features/upload/`.
 2. Viết `useUploadStore` quản lý queue.
 
 ### Giai đoạn 6: Polish (1-2 ngày)
+
 1. Thêm TanStack Query thay thế fetch thủ công (nếu muốn).
 2. Thêm CSS Modules hoặc Tailwind cho scoped styles.
 3. Viết thêm utils chung, dọn dẹp code cũ.
@@ -557,4 +567,4 @@ Lợi ích: Import gọn, dễ refactor tên file bên trong.
 
 ---
 
-*Document này là bản đồ hướng dẫn refactor. Hãy giữ nó ở `docs/architecture.md` và cập nhật khi thêm feature mới.*
+_Document này là bản đồ hướng dẫn refactor. Hãy giữ nó ở `docs/architecture.md` và cập nhật khi thêm feature mới._
