@@ -22,7 +22,7 @@ export default function SideBar({
   return (
     <aside className={`${styles.sidebar} ${sidebarOpen ? styles.open : ""}`}>
       <h2>📁 FolVid</h2>
-      <p className="count">{videos.length} video trong thư mục</p>
+      <p className={styles.count}>{videos.length} video trong thư mục</p>
 
       {/* ===== SEARCH BAR ===== */}
       <div style={{ marginBottom: "12px" }}>
@@ -31,72 +31,30 @@ export default function SideBar({
           placeholder="🔍 Tìm theo tên, nghệ sĩ..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: "8px",
-            border: "1px solid #444",
-            background: "#2a2a2a",
-            color: "#fff",
-            fontSize: "0.9rem",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
+          className={styles.searchInput}
         />
       </div>
       {/* ===== FILTER PANEL (Accordion) ===== */}
       <div style={{ marginBottom: "16px" }}>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          style={{
-            width: "100%",
-            textAlign: "left",
-            background: "transparent",
-            border: "none",
-            color: "#aaa",
-            cursor: "pointer",
-            fontSize: "0.85rem",
-            padding: "4px 0",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
+          className={styles.filterToggle}
         >
           <span>⚙️ Bộ lọc nâng cao</span>
           <span>{showFilters ? "▲" : "▼"}</span>
         </button>
 
         {showFilters && (
-          <div
-            style={{
-              marginTop: "8px",
-              padding: "12px",
-              background: "#252525",
-              borderRadius: "8px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-            }}
-          >
+          <div className={styles.filterContent}>
             {/* Genre */}
             <div>
-              <label style={{ color: "#888", fontSize: "0.8rem" }}>
-                Thể loại
-              </label>
+              <label className={styles.filterLabel}>Thể loại</label>
               <select
                 value={filters.genre}
                 onChange={(e) =>
                   setFilters((f) => ({ ...f, genre: e.target.value }))
                 }
-                style={{
-                  width: "100%",
-                  marginTop: "4px",
-                  padding: "6px",
-                  background: "#1e1e1e",
-                  color: "#fff",
-                  border: "1px solid #444",
-                  borderRadius: "4px",
-                }}
+                className={styles.filterSelect}
               >
                 {genres.map((g) => (
                   <option key={g} value={g}>
@@ -108,23 +66,13 @@ export default function SideBar({
 
             {/* Artist */}
             <div>
-              <label style={{ color: "#888", fontSize: "0.8rem" }}>
-                Nghệ sĩ
-              </label>
+              <label className={styles.filterLabel}>Nghệ sĩ</label>
               <select
                 value={filters.artist}
                 onChange={(e) =>
                   setFilters((f) => ({ ...f, artist: e.target.value }))
                 }
-                style={{
-                  width: "100%",
-                  marginTop: "4px",
-                  padding: "6px",
-                  background: "#1e1e1e",
-                  color: "#fff",
-                  border: "1px solid #444",
-                  borderRadius: "4px",
-                }}
+                className={styles.filterSelect}
               >
                 {artists.map((a) => (
                   <option key={a} value={a}>
@@ -137,9 +85,7 @@ export default function SideBar({
             {/* Duration Range */}
             <div style={{ display: "flex", gap: "8px" }}>
               <div style={{ flex: 1 }}>
-                <label style={{ color: "#888", fontSize: "0.8rem" }}>
-                  Min (phút)
-                </label>
+                <label className={styles.filterLabel}>Min (phút)</label>
                 <input
                   type="number"
                   min="0"
@@ -147,16 +93,7 @@ export default function SideBar({
                   onChange={(e) =>
                     setFilters((f) => ({ ...f, minDuration: e.target.value }))
                   }
-                  style={{
-                    width: "100%",
-                    marginTop: "4px",
-                    padding: "6px",
-                    background: "#1e1e1e",
-                    color: "#fff",
-                    border: "1px solid #444",
-                    borderRadius: "4px",
-                    boxSizing: "border-box",
-                  }}
+                  className={styles.filterInput}
                 />
               </div>
               <div style={{ flex: 1 }}>
@@ -170,16 +107,7 @@ export default function SideBar({
                   onChange={(e) =>
                     setFilters((f) => ({ ...f, maxDuration: e.target.value }))
                   }
-                  style={{
-                    width: "100%",
-                    marginTop: "4px",
-                    padding: "6px",
-                    background: "#1e1e1e",
-                    color: "#fff",
-                    border: "1px solid #444",
-                    borderRadius: "4px",
-                    boxSizing: "border-box",
-                  }}
+                  className={styles.filterInput}
                 />
               </div>
             </div>
@@ -194,15 +122,7 @@ export default function SideBar({
                 onChange={(e) =>
                   setFilters((f) => ({ ...f, resolution: e.target.value }))
                 }
-                style={{
-                  width: "100%",
-                  marginTop: "4px",
-                  padding: "6px",
-                  background: "#1e1e1e",
-                  color: "#fff",
-                  border: "1px solid #444",
-                  borderRadius: "4px",
-                }}
+                className={styles.filterSelect}
               >
                 {resolutions.map((r) => (
                   <option key={r} value={r}>
@@ -224,16 +144,7 @@ export default function SideBar({
                   resolution: "",
                 });
               }}
-              style={{
-                marginTop: "4px",
-                padding: "8px",
-                background: "#ef4444",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "0.85rem",
-              }}
+              className={styles.clearFiltersBtn}
             >
               ✕ Xóa bộ lọc
             </button>
@@ -242,33 +153,26 @@ export default function SideBar({
       </div>
 
       {/* ===== DANH SÁCH VIDEO ===== */}
-      <p style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "12px" }}>
+      <p className={styles.videoCount}>
         {filteredVideos.length} / {videos.length} video
       </p>
-      <ul className="video-list">{children}</ul>
+      <ul className={styles.videoList}>{children}</ul>
 
+      {/* ===== DRAG & DROP ===== */}
       <div
         onDrop={handleDropFile}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        style={{
-          border: isDraggingFile ? "2px dashed #3b82f6" : "2px dashed #555",
-          padding: "20px",
-          textAlign: "center",
-          marginBottom: "20px",
-          borderRadius: "8px",
-          background: isDraggingFile ? "#1a2f4a" : "#2a2a2a",
-          cursor: "pointer",
-        }}
+        className={`${styles.dropZone} ${isDraggingFile ? styles.dropZoneDragging : ""}`}
       >
         <input
           type="file"
           accept="video/*"
-          style={{ display: " ne" }}
+          style={{ display: "none" }}
           id="fileInput"
           onChange={handleFileSelect}
         />
-        <label htmlFor="fileInput" style={{ cursor: "pointer", color: "#fff" }}>
+        <label htmlFor="fileInput" className={styles.dropZoneLabel}>
           {isDraggingFile
             ? "Thả file vào đây"
             : "Kéo thả video vào đây, hoặc click để chọn"}

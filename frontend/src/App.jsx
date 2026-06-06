@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import { API_BASE_URL } from "./config/api.js";
 import ContextMenu, { MenuItem } from "./ContextMenu.jsx";
+import FileUpload from "./features/video-list/components/FileUpload";
 import VideoList from "./features/video-list/components/VideoList";
 import VideoListItem from "./features/video-list/components/VideoListItem";
 import { formatSize } from "./utils/formatSize";
@@ -828,36 +829,7 @@ function App() {
         </VideoList>
 
         {/* ===== DRAG & DROP ===== */}
-        <div
-          onDrop={handleDropFile}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          style={{
-            border: isDraggingFile ? "2px dashed #3b82f6" : "2px dashed #555",
-            padding: "20px",
-            textAlign: "center",
-            marginBottom: "20px",
-            borderRadius: "8px",
-            background: isDraggingFile ? "#1a2f4a" : "#2a2a2a",
-            cursor: "pointer",
-          }}
-        >
-          <input
-            type="file"
-            accept="video/*"
-            style={{ display: " ne" }}
-            id="fileInput"
-            onChange={handleFileSelect}
-          />
-          <label
-            htmlFor="fileInput"
-            style={{ cursor: "pointer", color: "#fff" }}
-          >
-            {isDraggingFile
-              ? "Thả file vào đây"
-              : "Kéo thả video vào đây, hoặc click để chọn"}
-          </label>
-        </div>
+        <FileUpload fetchVideoList={fetchVideoList} />
       </aside>
 
       {/* Main Area */}
