@@ -1,5 +1,6 @@
 // src/stores/useVideoStore.js
 import { API_BASE_URL } from "@/config/api";
+import { videoApi } from "@/services/videoApi";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
@@ -85,10 +86,7 @@ export const useVideoStore = create(
         set({ isLoading: true, error: null }, false, "videos/fetchStart");
 
         try {
-          const res = await fetch(`${API_BASE_URL}/api/videos`);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-          const data = await res.json(); // string[]
+          const data = await videoApi.getList();
 
           set({ videos: data, isLoading: false }, false, "videos/fetchSuccess");
 
