@@ -11,6 +11,7 @@
 Người dùng di chuột trên thanh tiến trình (progress bar) và muốn **xem trước hình ảnh** tại thời điểm đó để biết đang seek đến đâu. Tính năng này trên YouTube/Netflix gọi là **Scrubbing Preview**, **Hover Thumbnail**, hoặc **Seek Preview**.
 
 **Thách thức:**
+
 - Video có thể ngắn (clip vài giây) hoặc dài (phim 2 tiếng, 4GB).
 - Không được gây lag CPU/ổ cứng khi hover liên tục.
 - Preview phải chính xác và mượt.
@@ -19,23 +20,25 @@ Người dùng di chuột trên thanh tiến trình (progress bar) và muốn **
 
 ## 🔍 Tổng quan 3 phương pháp
 
-| Tiêu chí | **Option A**<br>Video ẩn + Canvas | **Option B**<br>Storyboard (ffmpeg) | **Option C**<br>Hybrid |
-|---|---|---|---|
-| **Tên tiếng Anh** | Hidden Video Element | Sprite Sheet / WebVTT Storyboard | Conditional Strategy |
-| **Server xử lý** | Không cần | Cần ffmpeg | Cần ffmpeg (một phần) |
-| **Độ chính xác** | Cao (đến từng ms) | Trung bình (theo khoảng 5-10s) | Cao với ngắn, ổn với dài |
-| **Hiệu năng** | Ổn với video ngắn, lag với video dài | Tốt nhất, chỉ load ảnh tĩnh | Tối ưu |
-| **Độ phức tạp code** | Thấp | Trung bình | Trung bình |
-| **Phù hợp khi** | Prototype, video < 15 phút | Production, video dài | FolVid lâu dài |
+| Tiêu chí             | **Option A**<br>Video ẩn + Canvas    | **Option B**<br>Storyboard (ffmpeg) | **Option C**<br>Hybrid   |
+| -------------------- | ------------------------------------ | ----------------------------------- | ------------------------ |
+| **Tên tiếng Anh**    | Hidden Video Element                 | Sprite Sheet / WebVTT Storyboard    | Conditional Strategy     |
+| **Server xử lý**     | Không cần                            | Cần ffmpeg                          | Cần ffmpeg (một phần)    |
+| **Độ chính xác**     | Cao (đến từng ms)                    | Trung bình (theo khoảng 5-10s)      | Cao với ngắn, ổn với dài |
+| **Hiệu năng**        | Ổn với video ngắn, lag với video dài | Tốt nhất, chỉ load ảnh tĩnh         | Tối ưu                   |
+| **Độ phức tạp code** | Thấp                                 | Trung bình                          | Trung bình               |
+| **Phù hợp khi**      | Prototype, video < 15 phút           | Production, video dài               | FolVid lâu dài           |
 
 ---
 
 ## Option A: Video ẩn + Canvas (Quick & Dirty)
 
 ### Nguyên lý
+
 Dùng một thẻ `<video>` thứ hai (không hiển thị) cùng `src` với video chính. Khi hover thanh progress, tính `hoverTime`, gán cho video ẩn, đợi sự kiện `seeked`, rồi vẽ frame đó lên `<canvas>` hiển thị.
 
 ### Yêu cầu
+
 - Trình duyệt hỗ trợ HTML5 Video + Canvas API.
 - Không cần thêm thư viện hay công cụ server.
 
@@ -88,45 +91,45 @@ function VideoPlayer({ currentVideo }) {
 #### 2. Xử lý hover với Throttle
 
 ```jsx
-  // Throttle: chỉ cập nhật mỗi 150ms
-  const throttleRef = useRef(null);
+// Throttle: chỉ cập nhật mỗi 150ms
+const throttleRef = useRef(null);
 
-  const handleMouseMove = (e) => {
-    if (!progressRef.current || !duration) return;
+const handleMouseMove = (e) => {
+  if (!progressRef.current || !duration) return;
 
-    const rect = progressRef.current.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const percent = Math.min(Math.max(offsetX / rect.width, 0), 1);
-    const time = percent * duration;
+  const rect = progressRef.current.getBoundingClientRect();
+  const offsetX = e.clientX - rect.left;
+  const percent = Math.min(Math.max(offsetX / rect.width, 0), 1);
+  const time = percent * duration;
 
-    setHoverTime(time);
-    setIsHovering(true);
+  setHoverTime(time);
+  setIsHovering(true);
 
-    // Di chuyển canvas theo chuột
-    if (canvasRef.current) {
-      const canvasWidth = 160;
-      const leftPos = offsetX - (canvasWidth / 2);
-      canvasRef.current.style.left = `${Math.max(0, leftPos)}px`;
-    }
+  // Di chuyển canvas theo chuột
+  if (canvasRef.current) {
+    const canvasWidth = 160;
+    const leftPos = offsetX - canvasWidth / 2;
+    canvasRef.current.style.left = `${Math.max(0, leftPos)}px`;
+  }
 
-    // Throttle việc seek video ẩn
-    if (!throttleRef.current) {
-      throttleRef.current = setTimeout(() => {
-        if (previewRef.current) {
-          previewRef.current.currentTime = time;
-        }
-        throttleRef.current = null;
-      }, 150);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-    if (throttleRef.current) {
-      clearTimeout(throttleRef.current);
+  // Throttle việc seek video ẩn
+  if (!throttleRef.current) {
+    throttleRef.current = setTimeout(() => {
+      if (previewRef.current) {
+        previewRef.current.currentTime = time;
+      }
       throttleRef.current = null;
-    }
-  };
+    }, 150);
+  }
+};
+
+const handleMouseLeave = () => {
+  setIsHovering(false);
+  if (throttleRef.current) {
+    clearTimeout(throttleRef.current);
+    throttleRef.current = null;
+  }
+};
 ```
 
 #### 3. JSX cho thanh progress + preview
@@ -217,17 +220,20 @@ function VideoPlayer({ currentVideo }) {
 ```
 
 ### Ưu điểm
+
 - Triển khai cực nhanh, không cần động đến backend.
 - Preview chính xác đến từng giây (thậm chí ms).
 - Không tốn thêm dung lượng lưu trữ.
 
 ### Nhược điểm
+
 - **Lag với video lớn**: mỗi lần hover là một lần seek ổ cứng. Nếu video 4GB, đầu đọc HDD phải nhảy liên tục.
 - **CPU decode**: decoder phải giải nén keyframe liên tục khi hover nhanh.
 - **Keyframe interval**: nếu video nén mạnh (keyframe mỗi 5 giây), preview có thể bị nhảy cóc, không mượt.
 - **CORS**: nếu sau này deploy frontend/backend khác domain, `canvas.drawImage()` từ cross-origin video sẽ bị "taint", phải thêm `crossOrigin="anonymous"` và backend trả header `Access-Control-Allow-Origin`.
 
 ### Khi nào dùng
+
 - Video ngắn (< 15 phút).
 - Số lượng file ít.
 - Giai đoạn prototype/MVP.
@@ -237,15 +243,18 @@ function VideoPlayer({ currentVideo }) {
 ## Option B: Storyboard bằng ffmpeg (Chuẩn YouTube)
 
 ### Nguyên lý
+
 Dùng **ffmpeg** để:
+
 1. Chụp frame tại mỗi khoảng thời gian cố định (ví dụ mỗi 5 giây).
 2. Ghép các frame thành **một tấm sprite sheet** duy nhất (ví dụ grid 10×10).
-3. Tạo file `.vtt` (WebVTT) mô tả: *từ giây X đến Y, hiển thị ô (row, col) trong sprite*.
+3. Tạo file `.vtt` (WebVTT) mô tả: _từ giây X đến Y, hiển thị ô (row, col) trong sprite_.
 4. Frontend chỉ việc hiển thị đúng mảnh ảnh từ sprite bằng CSS `background-position`.
 
 **Kết quả:** Hover thanh progress chỉ là thao tác với ảnh tĩnh, không seek video, không decode.
 
 ### Yêu cầu
+
 - Cài đặt **ffmpeg** trên server (backend).
 - Node.js có quyền chạy command line (`child_process`).
 - Thêm endpoint API để frontend lấy sprite + VTT.
@@ -273,12 +282,19 @@ magick montage backend/storyboards/movie_frame_*.jpg   -tile 10x10 -geometry 160
 ### Bước 2: Tạo file WebVTT tự động (Node.js)
 
 ```javascript
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-function generateVTT(videoName, totalDuration, interval = 5, cols = 10, thumbWidth = 160, thumbHeight = 90) {
+function generateVTT(
+  videoName,
+  totalDuration,
+  interval = 5,
+  cols = 10,
+  thumbWidth = 160,
+  thumbHeight = 90,
+) {
   const framesCount = Math.ceil(totalDuration / interval);
-  let vtt = 'WEBVTT\n\n';
+  let vtt = "WEBVTT\n\n";
 
   for (let i = 0; i < framesCount; i++) {
     const start = i * interval;
@@ -294,7 +310,7 @@ function generateVTT(videoName, totalDuration, interval = 5, cols = 10, thumbWid
       const m = Math.floor((s % 3600) / 60);
       const sec = Math.floor(s % 60);
       const ms = Math.floor((s % 1) * 1000);
-      return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}.${ms.toString().padStart(3,'0')}`;
+      return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
     };
 
     vtt += `${fmt(start)} --> ${fmt(end)}\n`;
@@ -314,13 +330,17 @@ function generateVTT(videoName, totalDuration, interval = 5, cols = 10, thumbWid
 Thêm vào `server.js`:
 
 ```javascript
-const { execSync } = require('child_process');
-const ffmpegPath = 'ffmpeg'; // hoặc đường dẫn tuyệt đối
+const { execSync } = require("child_process");
+const ffmpegPath = "ffmpeg"; // hoặc đường dẫn tuyệt đối
 
 function ensureStoryboard(videoFile) {
   const baseName = path.basename(videoFile, path.extname(videoFile));
-  const spritePath = path.join(__dirname, 'storyboards', `${baseName}_sprite.jpg`);
-  const vttPath = path.join(__dirname, 'storyboards', `${baseName}.vtt`);
+  const spritePath = path.join(
+    __dirname,
+    "storyboards",
+    `${baseName}_sprite.jpg`,
+  );
+  const vttPath = path.join(__dirname, "storyboards", `${baseName}.vtt`);
 
   if (fs.existsSync(spritePath) && fs.existsSync(vttPath)) {
     return { sprite: spritePath, vtt: vttPath };
@@ -331,13 +351,18 @@ function ensureStoryboard(videoFile) {
   const duration = parseFloat(execSync(durationCmd).toString().trim());
 
   // Tạo frames
-  const framesDir = path.join(__dirname, 'storyboards', `${baseName}_frames`);
+  const framesDir = path.join(__dirname, "storyboards", `${baseName}_frames`);
   if (!fs.existsSync(framesDir)) fs.mkdirSync(framesDir, { recursive: true });
 
-  execSync(`${ffmpegPath} -i "${videoFile}" -vf "fps=1/5,scale=160:90:force_original_aspect_ratio=decrease,pad=160:90:(ow-iw)/2:(oh-ih)/2:black" -q:v 3 "${framesDir}/frame_%03d.jpg"`);
+  execSync(
+    `${ffmpegPath} -i "${videoFile}" -vf "fps=1/5,scale=160:90:force_original_aspect_ratio=decrease,pad=160:90:(ow-iw)/2:(oh-ih)/2:black" -q:v 3 "${framesDir}/frame_%03d.jpg"`,
+  );
 
   // Ghép sprite (giả sử dùng ImageMagick, nếu không có thì dùng sharp trong Node)
-  const frameFiles = fs.readdirSync(framesDir).filter(f => f.endsWith('.jpg')).sort();
+  const frameFiles = fs
+    .readdirSync(framesDir)
+    .filter((f) => f.endsWith(".jpg"))
+    .sort();
   // ... (dùng sharp để ghép nếu không có ImageMagick)
 
   // Tạo VTT
@@ -348,40 +373,40 @@ function ensureStoryboard(videoFile) {
 }
 
 // API endpoint
-app.get('/api/storyboard/:videoName', (req, res) => {
+app.get("/api/storyboard/:videoName", (req, res) => {
   const videoName = req.params.videoName;
   const videoPath = path.join(VIDEO_DIR, videoName);
 
   if (!fs.existsSync(videoPath)) {
-    return res.status(404).json({ error: 'Video không tồn tại' });
+    return res.status(404).json({ error: "Video không tồn tại" });
   }
 
   try {
     const sb = ensureStoryboard(videoPath);
     res.json({
       vttUrl: `/storyboards/${path.basename(sb.vtt)}`,
-      spriteUrl: `/storyboards/${path.basename(sb.sprite)}`
+      spriteUrl: `/storyboards/${path.basename(sb.sprite)}`,
     });
   } catch (err) {
-    res.status(500).json({ error: 'Lỗi tạo storyboard', detail: err.message });
+    res.status(500).json({ error: "Lỗi tạo storyboard", detail: err.message });
   }
 });
 
 // Phục vụ file storyboard tĩnh
-app.use('/storyboards', express.static(path.join(__dirname, 'storyboards')));
+app.use("/storyboards", express.static(path.join(__dirname, "storyboards")));
 ```
 
 ### Bước 4: Frontend – Hiển thị sprite
 
 ```jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 function StoryboardPreview({ videoName, hoverTime, duration, isHovering }) {
   const [storyboard, setStoryboard] = useState(null);
 
   useEffect(() => {
     fetch(`${API}/api/storyboard/${encodeURIComponent(videoName)}`)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then(setStoryboard)
       .catch(console.error);
   }, [videoName]);
@@ -398,32 +423,38 @@ function StoryboardPreview({ videoName, hoverTime, duration, isHovering }) {
   const col = frameIndex % cols;
 
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: '20px',
-      width: thumbW,
-      height: thumbH,
-      borderRadius: '4px',
-      overflow: 'hidden',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.6)'
-    }}>
-      <div style={{
-        width: '100%',
-        height: '100%',
-        backgroundImage: `url(${API}${storyboard.spriteUrl})`,
-        backgroundPosition: `-${col * thumbW}px -${row * thumbH}px`,
-        backgroundSize: `${cols * thumbW}px auto`
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        background: 'rgba(0,0,0,0.8)',
-        color: '#fff',
-        fontSize: '12px',
-        textAlign: 'center',
-        padding: '2px 0'
-      }}>
+    <div
+      style={{
+        position: "absolute",
+        bottom: "20px",
+        width: thumbW,
+        height: thumbH,
+        borderRadius: "4px",
+        overflow: "hidden",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          backgroundImage: `url(${API}${storyboard.spriteUrl})`,
+          backgroundPosition: `-${col * thumbW}px -${row * thumbH}px`,
+          backgroundSize: `${cols * thumbW}px auto`,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          width: "100%",
+          background: "rgba(0,0,0,0.8)",
+          color: "#fff",
+          fontSize: "12px",
+          textAlign: "center",
+          padding: "2px 0",
+        }}
+      >
         {formatTime(hoverTime)}
       </div>
     </div>
@@ -432,11 +463,13 @@ function StoryboardPreview({ videoName, hoverTime, duration, isHovering }) {
 ```
 
 ### Ưu điểm
+
 - **Hiệu năng tốt nhất**: chỉ load ảnh tĩnh một lần, hover sau đó không tốn thêm bandwidth hay CPU.
 - Không lag ổ cứng, không decode video liên tục.
 - Có thể cache sprite/VTT vĩnh viễn (CDN friendly).
 
 ### Nhược điểm
+
 - **Phải cài ffmpeg** trên server.
 - **Thời gian generate**: video dài 2 tiếng có thể mất 30-60 giây để tạo storyboard lần đầu.
 - **Dung lượng thêm**: sprite cho video 2 tiếng (mỗi 5s một frame) ≈ 1440 frame × ~2KB = ~3MB. Chấp nhận được.
@@ -444,6 +477,7 @@ function StoryboardPreview({ videoName, hoverTime, duration, isHovering }) {
 - **Phụ thuộc công cụ ngoài**: ffmpeg (và tùy chọn ImageMagick/sharp).
 
 ### Khi nào dùng
+
 - Video dài (> 15 phút).
 - Production deployment.
 - Nhiều người dùng cùng truy cập (tránh quá tải I/O).
@@ -453,7 +487,9 @@ function StoryboardPreview({ videoName, hoverTime, duration, isHovering }) {
 ## Option C: Hybrid (Khuyến nghị cho FolVid)
 
 ### Nguyên lý
+
 Kết hợp cả hai:
+
 - **Video ngắn** (< ngưỡng, ví dụ 15 phút hoặc < 500MB): dùng **Option A** (video ẩn + canvas). Đơn giản, không cần xử lý thêm.
 - **Video dài** (> ngưỡng): backend **tự động generate storyboard** (Option B) khi khởi động hoặc khi phát hiện file mới. Frontend ưu tiên dùng storyboard nếu có, fallback về Option A nếu chưa có.
 
@@ -461,31 +497,34 @@ Kết hợp cả hai:
 
 ```javascript
 const MAX_SIZE_FOR_INLINE_PREVIEW = 500 * 1024 * 1024; // 500MB
-const MAX_DURATION_FOR_INLINE_PREVIEW = 15 * 60;       // 15 phút
+const MAX_DURATION_FOR_INLINE_PREVIEW = 15 * 60; // 15 phút
 
 function getPreviewStrategy(videoPath) {
   const stats = fs.statSync(videoPath);
 
   // Ưu tiên dùng storyboard nếu đã tồn tại
   const baseName = path.basename(videoPath, path.extname(videoPath));
-  const hasStoryboard = fs.existsSync(path.join(STORYBOARD_DIR, `${baseName}.vtt`));
+  const hasStoryboard = fs.existsSync(
+    path.join(STORYBOARD_DIR, `${baseName}.vtt`),
+  );
 
-  if (hasStoryboard) return 'storyboard';
+  if (hasStoryboard) return "storyboard";
 
   // Nếu video nhỏ, cho phép inline (Option A)
-  if (stats.size < MAX_SIZE_FOR_INLINE_PREVIEW) return 'inline';
+  if (stats.size < MAX_SIZE_FOR_INLINE_PREVIEW) return "inline";
 
   // Video lớn và chưa có storyboard -> trigger generate
-  return 'storyboard_required';
+  return "storyboard_required";
 }
 ```
 
 ### API trả về thông tin preview
 
 ```javascript
-app.get('/api/video-info/:videoName', (req, res) => {
+app.get("/api/video-info/:videoName", (req, res) => {
   const videoPath = path.join(VIDEO_DIR, req.params.videoName);
-  if (!fs.existsSync(videoPath)) return res.status(404).json({ error: 'Not found' });
+  if (!fs.existsSync(videoPath))
+    return res.status(404).json({ error: "Not found" });
 
   const strategy = getPreviewStrategy(videoPath);
 
@@ -493,18 +532,18 @@ app.get('/api/video-info/:videoName', (req, res) => {
     name: req.params.videoName,
     previewStrategy: strategy,
     // Nếu là storyboard, trả thêm URL
-    ...(strategy === 'storyboard' && {
+    ...(strategy === "storyboard" && {
       storyboard: {
         vtt: `/storyboards/${path.basename(videoPath, path.extname(videoPath))}.vtt`,
-        sprite: `/storyboards/${path.basename(videoPath, path.extname(videoPath))}_sprite.jpg`
-      }
-    })
+        sprite: `/storyboards/${path.basename(videoPath, path.extname(videoPath))}_sprite.jpg`,
+      },
+    }),
   };
 
   // Nếu cần generate, chạy ngầm (không đợi)
-  if (strategy === 'storyboard_required') {
+  if (strategy === "storyboard_required") {
     generateStoryboardAsync(videoPath); // không await
-    response.previewStrategy = 'inline'; // tạm thời dùng inline trong lúc generate
+    response.previewStrategy = "inline"; // tạm thời dùng inline trong lúc generate
   }
 
   res.json(response);
@@ -514,58 +553,71 @@ app.get('/api/video-info/:videoName', (req, res) => {
 ### Frontend – Component thông minh
 
 ```jsx
-function SmartPreview({ videoName, hoverTime, duration, isHovering, progressRef }) {
+function SmartPreview({
+  videoName,
+  hoverTime,
+  duration,
+  isHovering,
+  progressRef,
+}) {
   const [videoInfo, setVideoInfo] = useState(null);
 
   useEffect(() => {
     fetch(`${API}/api/video-info/${encodeURIComponent(videoName)}`)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then(setVideoInfo);
   }, [videoName]);
 
   if (!videoInfo || !isHovering) return null;
 
   // Nếu backend có storyboard, dùng component StoryboardPreview
-  if (videoInfo.previewStrategy === 'storyboard' && videoInfo.storyboard) {
-    return <StoryboardPreview 
-      spriteUrl={API + videoInfo.storyboard.sprite}
-      vttUrl={API + videoInfo.storyboard.vtt}
-      hoverTime={hoverTime}
-      duration={duration}
-    />;
+  if (videoInfo.previewStrategy === "storyboard" && videoInfo.storyboard) {
+    return (
+      <StoryboardPreview
+        spriteUrl={API + videoInfo.storyboard.sprite}
+        vttUrl={API + videoInfo.storyboard.vtt}
+        hoverTime={hoverTime}
+        duration={duration}
+      />
+    );
   }
 
   // Fallback: dùng video ẩn + canvas (Option A)
-  return <CanvasPreview 
-    videoSrc={`${API}/videos/${encodeURIComponent(videoName)}`}
-    hoverTime={hoverTime}
-    duration={duration}
-  />;
+  return (
+    <CanvasPreview
+      videoSrc={`${API}/videos/${encodeURIComponent(videoName)}`}
+      hoverTime={hoverTime}
+      duration={duration}
+    />
+  );
 }
 ```
 
 ### Quy trình chạy ngầm (Background Generation)
 
 ```javascript
-const { spawn } = require('child_process');
+const { spawn } = require("child_process");
 
 function generateStoryboardAsync(videoPath) {
   const baseName = path.basename(videoPath, path.extname(videoPath));
   const log = (msg) => console.log(`[Storyboard ${baseName}] ${msg}`);
 
-  log('Bắt đầu generate...');
+  log("Bắt đầu generate...");
 
   // Chạy ffmpeg trong background
-  const ffmpeg = spawn('ffmpeg', [
-    '-i', videoPath,
-    '-vf', 'fps=1/5,scale=160:90:force_original_aspect_ratio=decrease,pad=160:90:(ow-iw)/2:(oh-ih)/2:black',
-    '-q:v', '3',
-    path.join(STORYBOARD_DIR, `${baseName}_frame_%03d.jpg`)
+  const ffmpeg = spawn("ffmpeg", [
+    "-i",
+    videoPath,
+    "-vf",
+    "fps=1/5,scale=160:90:force_original_aspect_ratio=decrease,pad=160:90:(ow-iw)/2:(oh-ih)/2:black",
+    "-q:v",
+    "3",
+    path.join(STORYBOARD_DIR, `${baseName}_frame_%03d.jpg`),
   ]);
 
-  ffmpeg.on('close', (code) => {
+  ffmpeg.on("close", (code) => {
     if (code === 0) {
-      log('Hoàn thành frames, ghép sprite...');
+      log("Hoàn thành frames, ghép sprite...");
       // Gọi thêm sharp để ghép sprite và tạo VTT
       createSpriteAndVTT(baseName);
     } else {
@@ -576,15 +628,18 @@ function generateStoryboardAsync(videoPath) {
 ```
 
 ### Ưu điểm
+
 - **Tối ưu cho mọi trường hợp**: ngắn thì nhanh, dài thì mượt.
 - **Không bắt buộc ffmpeg ngay lập tức**: app vẫn chạy được với Option A, storyboard được tạo dần.
 - **Dễ mở rộng**: có thể điều chỉnh ngưỡng (threshold) dựa trên kích thước, độ dài, hoặc định dạng.
 
 ### Nhược điểm
+
 - Code phức tạp hơn một chút (phải quản lý 2 code path).
 - Cần logic kiểm tra "storyboard đã sẵn sàng chưa".
 
 ### Khi nào dùng
+
 - **Đây là lựa chọn khuyến nghị cho FolVid** nếu bạn định phát triển lâu dài.
 - Phù hợp khi thư mục `videos/` có cả clip ngắn lẫn phim dài.
 
@@ -593,30 +648,39 @@ function generateStoryboardAsync(videoPath) {
 ## 🔧 Các vấn đề thường gặp & Cách xử lý
 
 ### 1. CORS – Canvas bị "tainted"
+
 **Triệu chứng:** `SecurityError: The operation is insecure` khi gọi `canvas.toDataURL()` hoặc `ctx.drawImage()`.
 
 **Giải pháp:**
+
 - Thêm `crossOrigin="anonymous"` vào **cả 2 thẻ video** (chính + ẩn).
 - Backend phải trả header: `Access-Control-Allow-Origin: *` (hoặc domain cụ thể).
 
 ```javascript
 // Trong server.js
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept",
+  );
   next();
 });
 ```
 
 ### 2. Video ẩn seek chậm
+
 **Triệu chứng:** Canvas hiển thị frame cũ, không kịp cập nhật khi hover nhanh.
 
 **Giải pháp:**
+
 - Throttle 150-200ms là đủ. Đừng throttle quá lâu (>500ms) vì sẽ giật.
 - Kiểm tra `previewRef.current.readyState >= 2` trước khi seek.
 
 ### 3. ffmpeg không có sẵn trên server
+
 **Giải pháp:**
+
 - Dùng package `@ffmpeg-installer/ffmpeg` trong Node.js để tự động tải binary phù hợp OS.
 - Hoặc dùng Docker image có sẵn ffmpeg.
 
@@ -625,20 +689,24 @@ npm install @ffmpeg-installer/ffmpeg
 ```
 
 ```javascript
-const ffmpeg = require('@ffmpeg-installer/ffmpeg');
+const ffmpeg = require("@ffmpeg-installer/ffmpeg");
 const ffmpegPath = ffmpeg.path;
 ```
 
 ### 4. Sprite quá lớn (chiều cao khổng lồ)
+
 **Triệu chứng:** Video 3 tiếng, mỗi 5s một frame = 2160 frame. Grid 10 cột → 216 hàng → ảnh dài 19440px. Một số trình duyệt giới hạn texture size (thường 16384px).
 
 **Giải pháp:**
+
 - Giảm khoảng cách frame (10 giây thay vì 5).
 - Tăng số cột (20 cột thay vì 10).
 - Hoặc chia thành nhiều sprite nhỏ hơn.
 
 ### 5. Storyboard chưa kịp tạo, user đã click video
+
 **Giải pháp:**
+
 - Trong Option C, khi `strategy === 'storyboard_required'`, trả về `inline` tạm thời.
 - Frontend tự động poll hoặc re-fetch `video-info` mỗi 30 giây để kiểm tra storyboard đã sẵn sàng chưa.
 
@@ -646,26 +714,29 @@ const ffmpegPath = ffmpeg.path;
 
 ## 📊 Quyết định chọn lựa (Decision Matrix)
 
-| Bối cảnh | Khuyến nghị |
-|---|---|
-| Bạn đang prototype, muốn xem kết quả ngay trong hôm nay | **Option A** |
-| Thư mục `videos/` chỉ có clip TikTok/YouTube ngắn (< 5 phút) | **Option A** |
-| Bạn có phim dài, file > 1GB, muốn UX chuyên nghiệp | **Option B** |
-| Thư mục có cả ngắn và dài, không biết trước | **Option C** |
-| Không muốn cài ffmpeg, không muốn xử lý backend thêm | **Option A** (chấp nhận lag với video lớn) |
-| Chuẩn bị deploy production cho nhiều người dùng | **Option B hoặc C** |
+| Bối cảnh                                                     | Khuyến nghị                                |
+| ------------------------------------------------------------ | ------------------------------------------ |
+| Bạn đang prototype, muốn xem kết quả ngay trong hôm nay      | **Option A**                               |
+| Thư mục `videos/` chỉ có clip TikTok/YouTube ngắn (< 5 phút) | **Option A**                               |
+| Bạn có phim dài, file > 1GB, muốn UX chuyên nghiệp           | **Option B**                               |
+| Thư mục có cả ngắn và dài, không biết trước                  | **Option C**                               |
+| Không muốn cài ffmpeg, không muốn xử lý backend thêm         | **Option A** (chấp nhận lag với video lớn) |
+| Chuẩn bị deploy production cho nhiều người dùng              | **Option B hoặc C**                        |
 
 ---
 
 ## 🚀 Lộ trình đề xuất cho FolVid
 
 ### Giai đoạn 1 (Ngay bây giờ)
+
 Triển khai **Option A** với throttle. Đây là đủ để app hoạt động mượt với đa số video thông thường.
 
 ### Giai đoạn 2 (Sau 1-2 tuần)
-Khi đã ổn định UI/UX cơ bản, thêm endpoint `/api/video-info` và logic kiểm tra kích thước video. Nếu video > 15 phút, hiển thị thông báo: *"Đang tạo preview..."* và chạy ffmpeg ngầm.
+
+Khi đã ổn định UI/UX cơ bản, thêm endpoint `/api/video-info` và logic kiểm tra kích thước video. Nếu video > 15 phút, hiển thị thông báo: _"Đang tạo preview..."_ và chạy ffmpeg ngầm.
 
 ### Giai đoạn 3 (Hoàn thiện)
+
 Chuyển sang **Option C** đầy đủ. Frontend tự động chuyển đổi giữa 2 chế độ dựa trên response từ backend. Người dùng không cần biết đằng sau đang xảy ra gì.
 
 ---
@@ -692,4 +763,4 @@ Chuyển sang **Option C** đầy đủ. Frontend tự động chuyển đổi g
 
 ---
 
-*Ghi chú: File này là tài liệu nội bộ của project FolVid. Nên được lưu trong `docs/` và đồng bộ lên GitHub cùng codebase để team (hoặc chính bạn sau này) có thể trace lại quyết định kỹ thuật.*
+_Ghi chú: File này là tài liệu nội bộ của project FolVid. Nên được lưu trong `docs/` và đồng bộ lên GitHub cùng codebase để team (hoặc chính bạn sau này) có thể trace lại quyết định kỹ thuật._
