@@ -3,6 +3,7 @@ import "./App.css";
 import { API_BASE_URL } from "./config/api.js";
 import ContextMenu, { MenuItem } from "./ContextMenu.jsx";
 import FileUpload from "./features/video-list/components/FileUpload";
+import SearchBar from "./features/video-list/components/SearchBar";
 import VideoList from "./features/video-list/components/VideoList";
 import VideoListItem from "./features/video-list/components/VideoListItem";
 import { formatSize } from "./utils/formatSize";
@@ -133,6 +134,8 @@ function App() {
       const res = await fetch(`${API_BASE_URL}/api/videos`);
       const data = await res.json();
       setVideos(data);
+
+      return data;
     } catch (err) {
       console.error("Lỗi tải danh sách:", err);
     }
@@ -300,15 +303,6 @@ function App() {
       }
     }
   };
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === "f" || e.key === "F") {
-        toggleFullscreen();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, []);
 
   /* 
     Lưu trữ current state vào localStorage dùng cho lần bật sau
@@ -339,7 +333,7 @@ function App() {
     localStorage.setItem("folvid_player_state", JSON.stringify(state));
   };
 
-  // Ghi khi pause, tua, đổi tốc độ, đổi volume, tắt tab
+  // Ghi state khi pause, tua, đổi tốc độ, đổi volume, tắt tab
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -421,43 +415,6 @@ function App() {
     setTempName(filename);
   };
 
-  const cancelRename = () => {
-    setEditingName(null);
-    setTempName("");
-  };
-
-  const confirmRename = async (oldName) => {
-    if (!tempName || tempName === oldName) {
-      cancelRename();
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/videos/${encodeURIComponent(oldName)}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ newName: tempName }),
-        },
-      );
-
-      if (res.ok) {
-        // Cập nhật lại danh sách
-        await fetchVideoList();
-        // Nếu video đang phát bị đổi tên, cập nhật lại currentVideo
-        if (currentVideo.filename === oldName) setCurrentVideo(tempName);
-      } else {
-        const err = await res.json();
-        alert("Lỗi đổi tên: " + err.error);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setEditingName(null);
-    }
-  };
-
   const openDetailsModal = (v) => {
     setDetailsModal({
       open: true,
@@ -506,6 +463,9 @@ function App() {
       if (e.code === "KeyL") {
         toggleLoop();
       }
+      if (e.code === "KeyF") {
+        toggleFullscreen();
+      }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -524,26 +484,7 @@ function App() {
         <h2>📁 FolVid</h2>
         <p className="count">{videos.length} video trong thư mục</p>
 
-        {/* ===== SEARCH BAR ===== */}
-        <div style={{ marginBottom: "12px" }}>
-          <input
-            type="text"
-            placeholder="🔍 Tìm theo tên, nghệ sĩ..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #444",
-              background: "#2a2a2a",
-              color: "#fff",
-              fontSize: "0.9rem",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
+        <SearchBar search={search} setSearch={setSearch} />
 
         {/* ===== FILTER PANEL (Accordion) ===== */}
         <div style={{ marginBottom: "16px" }}>
@@ -751,24 +692,15 @@ function App() {
             <VideoListItem
               key={v.filename}
               v={v}
-              isActive={currentVideo === v}
-              onClick={() => handleSelectVideo(v)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setContextMenu({
-                  visible: true,
-                  x: e.clientX,
-                  y: e.clientY,
-                  type: "listItem",
-                  target: v,
-                });
-              }}
-              isEditingName={editingName === v.filename}
+              currentVideo={currentVideo}
+              setCurrentVideo={setCurrentVideo}
+              editingName={editingName}
+              setEditingName={setEditingName}
               tempName={tempName}
               setTempName={setTempName}
-              confirmRename={confirmRename}
-              cancelRename={cancelRename}
+              fetchVideoList={fetchVideoList}
+              setContextMenu={setContextMenu}
+              handleSelectVideo={handleSelectVideo}
             />
           ))}
         </VideoList>

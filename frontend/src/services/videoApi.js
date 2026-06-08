@@ -20,6 +20,7 @@ export const videoApi = {
     if (!res.ok) {
       throw new Error("Lỗi không rename được video");
     }
+    return res;
   },
   upload: async (file) => {
     const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
