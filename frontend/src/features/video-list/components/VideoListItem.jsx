@@ -15,7 +15,7 @@ export default function VideoListItem({
   setTempName,
   fetchVideoList,
   setContextMenu,
-  handleSelectVideo,
+  setSidebarOpen,
 }) {
   const [ref, isInView] = useInView();
   const [showContent, setShowContent] = useState(false);
@@ -29,6 +29,12 @@ export default function VideoListItem({
       return () => clearTimeout(timer);
     }
   }, [isInView]);
+
+  const handleSelectVideo = (v) => {
+    if (editingName) return; // handleSelectVideo sẽ không hoạt động nếu đang editing name
+    setCurrentVideo(v);
+    setSidebarOpen(false); // Đóng sidebar sau khi chọn (trên mobile)
+  };
 
   const cancelRename = () => {
     setEditingName(null);

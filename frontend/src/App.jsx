@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
+import SideBar from "./components/layout/Sidebar/SideBar";
 import { API_BASE_URL } from "./config/api.js";
-import ContextMenu, { MenuItem } from "./ContextMenu.jsx";
-import FileUpload from "./features/video-list/components/FileUpload";
-import SearchBar from "./features/video-list/components/SearchBar";
+import {
+  VideoDetailsModal,
+  VideoPlayerContextMenu,
+} from "./features/video-actions/components";
 import VideoList from "./features/video-list/components/VideoList";
-import VideoListItem from "./features/video-list/components/VideoListItem";
 import { formatSize } from "./utils/formatSize";
 import { formatTime } from "./utils/formatTime.js";
-import VideoDetailsModal from "./VideoDetailsModal.jsx";
 
 function App() {
   const [videos, setVideos] = useState([]);
@@ -28,19 +28,8 @@ function App() {
   const [fx, setFx] = useState({ type: null, trigger: 0 });
   const [isLoop, setIsLoop] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({
-    genre: "",
-    artist: "",
-    minDuration: "",
-    maxDuration: "",
-    resolution: "",
-  });
-  const [showFilters, setShowFilters] = useState(false); // đóng/mở panel
+
   const [isDragging, setIsDragging] = useState(false);
-  const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
-  const [tempName, setTempName] = useState(""); // Giá trị tạm trong input
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     x: 0,
@@ -67,16 +56,6 @@ function App() {
       document.title = "FolVid";
     }
   }, [currentVideo]);
-
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/videos`)
-      .then((res) => res.json())
-      .then((data) => {
-        setVideos(data);
-        if (data.length > 0) setCurrentVideo(data[0]);
-      })
-      .catch((err) => console.error("Lỗi tải danh sách video:", err));
-  }, []);
 
   // Đóng Speed Menu khi click ngoài
   useEffect(() => {
@@ -140,62 +119,12 @@ function App() {
       console.error("Lỗi tải danh sách:", err);
     }
   };
-
-  const handleSelectVideo = (v) => {
-    if (editingName) return; // handleSelectVideo sẽ không hoạt động nếu đang editing name
-    setCurrentVideo(v);
-    setSidebarOpen(false); // Đóng sidebar sau khi chọn (trên mobile)
-  };
-
-  // Tạo list filtered Videos
-  const filteredVideos = useMemo(() => {
-    return videos.filter((v) => {
-      // 1. Search theo tên, title, artist
-      const q = search.toLowerCase();
-      const matchSearch =
-        !q ||
-        v.filename.toLowerCase().includes(q) ||
-        (v.filename && v.filename.toLowerCase().includes(q)) ||
-        (v.custom.artist && v.custom.artist.toLowerCase().includes(q));
-
-      // 2. Filter dropdown
-      const matchGenre = !filters.genre || v.custom.genre === filters.genre;
-      const matchArtist = !filters.artist || v.custom.artist === filters.artist;
-      const matchRes =
-        !filters.resolution || `${v.width}x${v.height}` === filters.resolution;
-
-      // 3. Filter duration (đổi phút -> giây để so sánh)
-      const min = filters.minDuration ? parseInt(filters.minDuration) * 60 : 0;
-      const max = filters.maxDuration
-        ? parseInt(filters.maxDuration) * 60
-        : Infinity;
-      const dur = v.duration || 0;
-      const matchDuration = dur >= min && dur <= max;
-
-      return (
-        matchSearch && matchGenre && matchArtist && matchRes && matchDuration
-      );
-    });
-  }, [videos, search, filters]);
-
-  const genres = useMemo(() => {
-    const set = new Set(videos.map((v) => v.custom.genre).filter(Boolean));
-    return ["", ...Array.from(set).sort()];
-  }, [videos]);
-
-  const artists = useMemo(() => {
-    const set = new Set(videos.map((v) => v.custom.artist).filter(Boolean));
-    return ["", ...Array.from(set).sort()];
-  }, [videos]);
-
-  const resolutions = useMemo(() => {
-    const set = new Set(
-      videos
-        .map((v) => (v.width && v.height ? `${v.width}x${v.height}` : null))
-        .filter(Boolean),
-    );
-    return ["", ...Array.from(set).sort()];
-  }, [videos]);
+  useEffect(() => {
+    async function fetchVideos() {
+      await fetchVideoList();
+    }
+    fetchVideos();
+  }, []);
 
   // Play / Pause toggle method
   const togglePlay = () => {
@@ -409,12 +338,6 @@ function App() {
     return () => video.removeEventListener("loadedmetadata", handleLoaded);
   }, [currentVideo, pendingRestore]);
 
-  // Thay đổi file name
-  const startRename = (filename) => {
-    setEditingName(filename);
-    setTempName(filename);
-  };
-
   const openDetailsModal = (v) => {
     setDetailsModal({
       open: true,
@@ -480,234 +403,18 @@ function App() {
       />
 
       {/* Sidebar */}
-      <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
-        <h2>📁 FolVid</h2>
-        <p className="count">{videos.length} video trong thư mục</p>
-
-        <SearchBar search={search} setSearch={setSearch} />
-
-        {/* ===== FILTER PANEL (Accordion) ===== */}
-        <div style={{ marginBottom: "16px" }}>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            style={{
-              width: "100%",
-              textAlign: "left",
-              background: "transparent",
-              border: "none",
-              color: "#aaa",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              padding: "4px 0",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span>⚙️ Bộ lọc nâng cao</span>
-            <span>{showFilters ? "▲" : "▼"}</span>
-          </button>
-
-          {showFilters && (
-            <div
-              style={{
-                marginTop: "8px",
-                padding: "12px",
-                background: "#252525",
-                borderRadius: "8px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-              }}
-            >
-              {/* Genre */}
-              <div>
-                <label style={{ color: "#888", fontSize: "0.8rem" }}>
-                  Thể loại
-                </label>
-                <select
-                  value={filters.genre}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, genre: e.target.value }))
-                  }
-                  style={{
-                    width: "100%",
-                    marginTop: "4px",
-                    padding: "6px",
-                    background: "#1e1e1e",
-                    color: "#fff",
-                    border: "1px solid #444",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {genres.map((g) => (
-                    <option key={g} value={g}>
-                      {g || "— Tất cả —"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Artist */}
-              <div>
-                <label style={{ color: "#888", fontSize: "0.8rem" }}>
-                  Nghệ sĩ
-                </label>
-                <select
-                  value={filters.artist}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, artist: e.target.value }))
-                  }
-                  style={{
-                    width: "100%",
-                    marginTop: "4px",
-                    padding: "6px",
-                    background: "#1e1e1e",
-                    color: "#fff",
-                    border: "1px solid #444",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {artists.map((a) => (
-                    <option key={a} value={a}>
-                      {a || "— Tất cả —"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Duration Range */}
-              <div style={{ display: "flex", gap: "8px" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ color: "#888", fontSize: "0.8rem" }}>
-                    Min (phút)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={filters.minDuration}
-                    onChange={(e) =>
-                      setFilters((f) => ({ ...f, minDuration: e.target.value }))
-                    }
-                    style={{
-                      width: "100%",
-                      marginTop: "4px",
-                      padding: "6px",
-                      background: "#1e1e1e",
-                      color: "#fff",
-                      border: "1px solid #444",
-                      borderRadius: "4px",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ color: "#888", fontSize: "0.8rem" }}>
-                    Max (phút)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={filters.maxDuration}
-                    onChange={(e) =>
-                      setFilters((f) => ({ ...f, maxDuration: e.target.value }))
-                    }
-                    style={{
-                      width: "100%",
-                      marginTop: "4px",
-                      padding: "6px",
-                      background: "#1e1e1e",
-                      color: "#fff",
-                      border: "1px solid #444",
-                      borderRadius: "4px",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Resolution */}
-              <div>
-                <label style={{ color: "#888", fontSize: "0.8rem" }}>
-                  Độ phân giải
-                </label>
-                <select
-                  value={filters.resolution}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, resolution: e.target.value }))
-                  }
-                  style={{
-                    width: "100%",
-                    marginTop: "4px",
-                    padding: "6px",
-                    background: "#1e1e1e",
-                    color: "#fff",
-                    border: "1px solid #444",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {resolutions.map((r) => (
-                    <option key={r} value={r}>
-                      {r || "— Tất cả —"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Nút xóa filter */}
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setFilters({
-                    genre: "",
-                    artist: "",
-                    minDuration: "",
-                    maxDuration: "",
-                    resolution: "",
-                  });
-                }}
-                style={{
-                  marginTop: "4px",
-                  padding: "8px",
-                  background: "#ef4444",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                }}
-              >
-                ✕ Xóa bộ lọc
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* ===== DANH SÁCH VIDEO ===== */}
-        <p style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "12px" }}>
-          {filteredVideos.length} / {videos.length} video
-        </p>
-        <VideoList>
-          {filteredVideos.map((v) => (
-            <VideoListItem
-              key={v.filename}
-              v={v}
-              currentVideo={currentVideo}
-              setCurrentVideo={setCurrentVideo}
-              editingName={editingName}
-              setEditingName={setEditingName}
-              tempName={tempName}
-              setTempName={setTempName}
-              fetchVideoList={fetchVideoList}
-              setContextMenu={setContextMenu}
-              handleSelectVideo={handleSelectVideo}
-            />
-          ))}
-        </VideoList>
-
-        {/* ===== DRAG & DROP ===== */}
-        <FileUpload fetchVideoList={fetchVideoList} />
-      </aside>
+      <SideBar sidebarOpen={sidebarOpen}>
+        <VideoList
+          videos={videos}
+          currentVideo={currentVideo}
+          setCurrentVideo={setCurrentVideo}
+          fetchVideoList={fetchVideoList}
+          contextMenu={contextMenu}
+          setContextMenu={setContextMenu}
+          setSidebarOpen={setSidebarOpen}
+          openDetailsModal={openDetailsModal}
+        />
+      </SideBar>
 
       {/* Main Area */}
       <main className="main-area">
@@ -946,89 +653,12 @@ function App() {
       </main>
 
       {/* Custom Context Menu */}
-      <ContextMenu
-        visible={contextMenu.visible && contextMenu.type === "listItem"}
-        x={contextMenu.x}
-        y={contextMenu.y}
-        onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
-      >
-        <MenuItem
-          icon="▶️"
-          label="Play"
-          onClick={() => {
-            setCurrentVideo(contextMenu.target);
-            setContextMenu((prev) => ({ ...prev, visible: false }));
-          }}
-        />
-        <MenuItem
-          icon="▶️"
-          label="Play New Tab"
-          onClick={() => {
-            const video = contextMenu.target;
-            const filename = video.filename;
-            const url = `/?v=${encodeURIComponent(filename)}`;
-            window.open(url, "_blank", "noopener,noreferrer");
-          }}
-        />
-        <MenuItem
-          icon="✏️"
-          label="Rename"
-          onClick={() => {
-            startRename(contextMenu.target.filename);
-            setContextMenu((prev) => ({ ...prev, visible: false }));
-          }}
-        />
-        <MenuItem
-          icon="📋"
-          label="Copy filename"
-          onClick={() => {
-            navigator.clipboard.writeText(contextMenu.target.filename);
-            setContextMenu((prev) => ({ ...prev, visible: false }));
-          }}
-        />
-        <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
-        <MenuItem
-          icon="ℹ️"
-          label="Details"
-          onClick={() => {
-            openDetailsModal(contextMenu.target);
-            setContextMenu((prev) => ({ ...prev, visible: false }));
-          }}
-        />
-      </ContextMenu>
-
-      <ContextMenu
-        visible={contextMenu.visible && contextMenu.type === "player"}
-        x={contextMenu.x}
-        y={contextMenu.y}
-        onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
-      >
-        <MenuItem
-          icon="🔁"
-          label="Toggle loop"
-          onClick={() => {
-            toggleLoop();
-            setContextMenu((prev) => ({ ...prev, visible: false }));
-          }}
-        />
-        <MenuItem
-          icon="📋"
-          label="Copy filename"
-          onClick={() => {
-            navigator.clipboard.writeText(contextMenu.target.filename);
-            setContextMenu((prev) => ({ ...prev, visible: false }));
-          }}
-        />
-        <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
-        <MenuItem
-          icon="ℹ️"
-          label="Details"
-          onClick={() => {
-            openDetailsModal(contextMenu.target);
-            setContextMenu((prev) => ({ ...prev, visible: false }));
-          }}
-        />
-      </ContextMenu>
+      <VideoPlayerContextMenu
+        contextMenu={contextMenu}
+        setContextMenu={setContextMenu}
+        toggleLoop={toggleLoop}
+        openDetailsModal={openDetailsModal}
+      />
 
       <VideoDetailsModal
         isOpen={detailsModal.open}

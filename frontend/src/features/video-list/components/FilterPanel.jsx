@@ -1,15 +1,33 @@
+import { useMemo, useState } from "react";
 import styles from "./FilterPanel.module.css";
 
 export default function FilterPanel({
-  setShowFilters,
-  showFilters,
+  videos,
   setFilters,
-  genres,
   filters,
-  artists,
-  resolutions,
   setSearch,
 }) {
+  const [showFilters, setShowFilters] = useState(false); // đóng/mở panel
+
+  const genres = useMemo(() => {
+    const set = new Set(videos.map((v) => v.custom.genre).filter(Boolean));
+    return ["", ...Array.from(set).sort()];
+  }, [videos]);
+
+  const artists = useMemo(() => {
+    const set = new Set(videos.map((v) => v.custom.artist).filter(Boolean));
+    return ["", ...Array.from(set).sort()];
+  }, [videos]);
+
+  const resolutions = useMemo(() => {
+    const set = new Set(
+      videos
+        .map((v) => (v.width && v.height ? `${v.width}x${v.height}` : null))
+        .filter(Boolean),
+    );
+    return ["", ...Array.from(set).sort()];
+  }, [videos]);
+
   return (
     <div style={{ marginBottom: "16px" }}>
       <button
