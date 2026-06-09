@@ -1,0 +1,100 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wrapper {
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  color: #eee;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.2s ease-out;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+}
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.filename {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.closeBtn:hover {
+  color: #fff;
+}
+
+.detailsModal {
+  padding: 20px;
+}
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.statCard {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.divider {
+  border-top: 1px solid #333;
+  margin: 0 20px;
+}
+.metaSection {
+  padding: 16px 20px 20px;
+}
+.metaTitle {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.infoRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  color: #666;
+}
