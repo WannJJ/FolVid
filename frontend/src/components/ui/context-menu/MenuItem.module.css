@@ -1,0 +1,9 @@
+.menuItem {
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #eee;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
