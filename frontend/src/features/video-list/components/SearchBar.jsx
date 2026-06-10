@@ -1,6 +1,6 @@
 import styles from "./VideoList.module.css";
 
-export default function SearchBar({ search, setSearch }) {
+export function SearchBar({ search, setSearch }) {
   return (
     <div style={{ marginBottom: "12px" }}>
       <input

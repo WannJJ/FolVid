@@ -1,21 +1,18 @@
-import VideoListContextMenu from "@/features/video-actions/components/VideoListContextMenu";
+import { VideoListContextMenu } from "@/features/video-actions/";
+import { useUIStore } from "@/stores/useUIStore";
 import { useMemo, useState } from "react";
-import FileUpload from "./FileUpload";
-import FilterPanel from "./FilterPanel";
-import SearchBar from "./SearchBar";
+import { FilterPanel } from "./FilterPanel";
+import { SearchBar } from "./SearchBar";
 import styles from "./VideoList.module.css";
-import VideoListItem from "./VideoListItem";
+import { VideoListItem } from "./VideoListItem";
 
-export default function VideoList({
+export function VideoList({
   videos,
   currentVideo,
   setCurrentVideo,
   fetchVideoList,
-  contextMenu,
-  setContextMenu,
-  setSidebarOpen,
-  openDetailsModal,
 }) {
+  const { openDetailsModal, setSidebarOpen } = useUIStore();
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
   const [tempName, setTempName] = useState(""); // Giá trị tạm trong input
   const [search, setSearch] = useState("");
@@ -94,19 +91,13 @@ export default function VideoList({
             tempName={tempName}
             setTempName={setTempName}
             fetchVideoList={fetchVideoList}
-            setContextMenu={setContextMenu}
             setSidebarOpen={setSidebarOpen}
           />
         ))}
       </ul>
 
-      {/* ===== DRAG & DROP ===== */}
-      <FileUpload fetchVideoList={fetchVideoList} />
-
       {/* ===== CONTEXT MENU ===== */}
       <VideoListContextMenu
-        contextMenu={contextMenu}
-        setContextMenu={setContextMenu}
         setCurrentVideo={setCurrentVideo}
         startRename={startRename}
         openDetailsModal={openDetailsModal}

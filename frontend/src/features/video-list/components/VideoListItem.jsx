@@ -1,11 +1,12 @@
 import { API_BASE_URL } from "@/config/api";
 import { videoApi } from "@/services/videoApi";
+import { useUIStore } from "@/stores/useUIStore";
 import { formatTime } from "@/utils/formatTime";
 import { useEffect, useState } from "react";
 import { useInView } from "../hooks/useInView";
 import styles from "./VideoListItem.module.css";
 
-export default function VideoListItem({
+export function VideoListItem({
   v,
   currentVideo,
   setCurrentVideo,
@@ -14,10 +15,10 @@ export default function VideoListItem({
   tempName,
   setTempName,
   fetchVideoList,
-  setContextMenu,
   setSidebarOpen,
 }) {
   const [ref, isInView] = useInView();
+  const { openContextMenu } = useUIStore();
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
@@ -73,8 +74,7 @@ export default function VideoListItem({
   const onContextMenu = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({
-      visible: true,
+    openContextMenu({
       x: e.clientX,
       y: e.clientY,
       type: "listItem",
@@ -87,7 +87,7 @@ export default function VideoListItem({
       ref={ref}
       onClick={() => handleSelectVideo(v)}
       onContextMenu={onContextMenu}
-      className={`${styles.videoItem} ${currentVideo.filename === v.filename ? styles.active : ""}`}
+      className={`${styles.videoItem} ${currentVideo && currentVideo.filename === v.filename ? styles.active : ""}`}
     >
       {showContent ? (
         <>

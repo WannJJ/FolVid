@@ -1,12 +1,7 @@
 import { useMemo, useState } from "react";
 import styles from "./FilterPanel.module.css";
 
-export default function FilterPanel({
-  videos,
-  setFilters,
-  filters,
-  setSearch,
-}) {
+export function FilterPanel({ videos, setFilters, filters, setSearch }) {
   const [showFilters, setShowFilters] = useState(false); // đóng/mở panel
 
   const genres = useMemo(() => {
