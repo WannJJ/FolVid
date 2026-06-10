@@ -1,27 +1,22 @@
 import { ContextMenu, MenuItem } from "@/components/ui/context-menu";
+import { useUIStore } from "@/stores/useUIStore";
 
-export default function VideoPlayerContextMenu({
-  contextMenu,
-  setContextMenu,
-  toggleLoop,
-  openDetailsModal,
-}) {
-  const hideContextMenu = () => {
-    setContextMenu((prev) => ({ ...prev, visible: false }));
-  };
+export function VideoPlayerContextMenu({ toggleLoop }) {
+  const { contextMenu, closeContextMenu, openDetailsModal } = useUIStore();
+
   return (
     <ContextMenu
       visible={contextMenu.visible && contextMenu.type === "player"}
       x={contextMenu.x}
       y={contextMenu.y}
-      onClose={hideContextMenu}
+      onClose={closeContextMenu}
     >
       <MenuItem
         icon="🔁"
         label="Toggle loop"
         onClick={() => {
           toggleLoop();
-          hideContextMenu();
+          closeContextMenu();
         }}
       />
       <MenuItem
@@ -29,7 +24,7 @@ export default function VideoPlayerContextMenu({
         label="Copy filename"
         onClick={() => {
           navigator.clipboard.writeText(contextMenu.target.filename);
-          hideContextMenu();
+          closeContextMenu();
         }}
       />
       <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
@@ -38,7 +33,7 @@ export default function VideoPlayerContextMenu({
         label="Details"
         onClick={() => {
           openDetailsModal(contextMenu.target);
-          hideContextMenu();
+          closeContextMenu();
         }}
       />
     </ContextMenu>

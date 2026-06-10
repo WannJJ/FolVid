@@ -1,28 +1,25 @@
 import { ContextMenu, MenuItem } from "@/components/ui/context-menu";
+import { useUIStore } from "@/stores/useUIStore";
 
-export default function VideoListContextMenu({
-  contextMenu,
-  setContextMenu,
+export function VideoListContextMenu({
   setCurrentVideo,
   startRename,
   openDetailsModal,
 }) {
-  const hideContextMenu = () => {
-    setContextMenu((prev) => ({ ...prev, visible: false }));
-  };
+  const { contextMenu, closeContextMenu } = useUIStore();
   return (
     <ContextMenu
       visible={contextMenu.visible && contextMenu.type === "listItem"}
       x={contextMenu.x}
       y={contextMenu.y}
-      onClose={hideContextMenu}
+      onClose={closeContextMenu}
     >
       <MenuItem
         icon="▶️"
         label="Play"
         onClick={() => {
           setCurrentVideo(contextMenu.target);
-          hideContextMenu();
+          closeContextMenu();
         }}
       />
       <MenuItem
@@ -33,7 +30,7 @@ export default function VideoListContextMenu({
           const filename = video.filename;
           const url = `/?v=${encodeURIComponent(filename)}`;
           window.open(url, "_blank", "noopener,noreferrer");
-          hideContextMenu();
+          closeContextMenu();
         }}
       />
       <MenuItem
@@ -41,7 +38,7 @@ export default function VideoListContextMenu({
         label="Rename"
         onClick={() => {
           startRename(contextMenu.target.filename);
-          hideContextMenu();
+          closeContextMenu();
         }}
       />
       <MenuItem
@@ -49,7 +46,7 @@ export default function VideoListContextMenu({
         label="Copy filename"
         onClick={() => {
           navigator.clipboard.writeText(contextMenu.target.filename);
-          hideContextMenu();
+          closeContextMenu();
         }}
       />
       <div style={{ borderTop: "1px solid #444", margin: "4px 0" }} />
@@ -58,7 +55,7 @@ export default function VideoListContextMenu({
         label="Details"
         onClick={() => {
           openDetailsModal(contextMenu.target);
-          hideContextMenu();
+          closeContextMenu();
         }}
       />
     </ContextMenu>

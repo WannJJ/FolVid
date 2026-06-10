@@ -1,24 +1,24 @@
+import { useUIStore } from "@/stores/useUIStore";
 import { useEffect } from "react";
 import styles from "./VideoDetailsModal.module.css";
 
-export default function VideoDetailsModal({
-  isOpen,
-  onClose,
-  details,
-  filename,
-}) {
+export function VideoDetailsModal() {
+  const { detailsModal, closeDetailsModal } = useUIStore();
+  const { open, filename, details } = detailsModal;
+
   // details = { width, height, duration, size, artist, author, genre }
+
   useEffect(() => {
-    if (!isOpen) return;
+    if (!open) return;
 
     const handleKey = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") closeDetailsModal();
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [isOpen, onClose]);
+  }, [open, closeDetailsModal]);
 
-  if (!isOpen) return null;
+  if (!open) return null;
 
   return (
     // Overlay
@@ -27,8 +27,8 @@ export default function VideoDetailsModal({
       <div
         className={styles.wrapper}
         style={{
-          transform: isOpen ? "scale(1)" : "scale(0.95)",
-          opacity: isOpen ? 1 : 0,
+          transform: open ? "scale(1)" : "scale(0.95)",
+          opacity: open ? 1 : 0,
         }}
       >
         <div className={styles.header}>
@@ -37,7 +37,7 @@ export default function VideoDetailsModal({
             <span className={styles.filename}>{filename}</span>
           </div>
 
-          <button className={styles.closeBtn} onClick={onClose}>
+          <button className={styles.closeBtn} onClick={closeDetailsModal}>
             ✕
           </button>
         </div>
