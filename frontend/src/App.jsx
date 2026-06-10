@@ -2,46 +2,32 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import SideBar from "./components/layout/Sidebar/SideBar";
 import { API_BASE_URL } from "./config/api.js";
+import { FileUpload } from "./features/upload";
 import {
   VideoDetailsModal,
   VideoPlayerContextMenu,
-} from "./features/video-actions/components";
-import VideoList from "./features/video-list/components/VideoList";
-import { formatSize } from "./utils/formatSize";
-import { formatTime } from "./utils/formatTime.js";
-
+} from "./features/video-actions";
+import { VideoList } from "./features/video-list/";
+import { VideoPlayer } from "./features/video-player";
+import { useUIStore } from "./stores/useUIStore";
 function App() {
   const [videos, setVideos] = useState([]);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [pendingRestore, setPendingRestore] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [progress, setProgress] = useState(0); // % của timeline (0-100)
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
-  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [volume, setVolume] = useState(1);
   const [latestVolume, setLatestVolume] = useState(1);
-  const [showControls, setShowControls] = useState(true);
   const [fx, setFx] = useState({ type: null, trigger: 0 });
   const [isLoop, setIsLoop] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const [isDragging, setIsDragging] = useState(false);
-  const [contextMenu, setContextMenu] = useState({
-    visible: false,
-    x: 0,
-    y: 0,
-    type: null, // 'listItem' | 'player'
-    target: null, // tên file video nếu là listItem
-  });
-  const [detailsModal, setDetailsModal] = useState({
-    open: false,
-    filename: "",
-    details: null,
-  });
+  const { sidebarOpen, toggleSidebar } = useUIStore();
 
   const videoRef = useRef(null);
   const timelineRef = useRef(null);
@@ -56,17 +42,6 @@ function App() {
       document.title = "FolVid";
     }
   }, [currentVideo]);
-
-  // Đóng Speed Menu khi click ngoài
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".speed-box")) {
-        setShowSpeedMenu(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -120,10 +95,13 @@ function App() {
     }
   };
   useEffect(() => {
-    async function fetchVideos() {
-      await fetchVideoList();
-    }
-    fetchVideos();
+    fetchVideoList()
+      .then((data) => {
+        if (data.length > 0) {
+          setCurrentVideo(data[0]);
+        }
+      })
+      .catch((err) => console.error("Lỗi tải danh sách video:", err));
   }, []);
 
   // Play / Pause toggle method
@@ -166,15 +144,6 @@ function App() {
   const handleMouseMove = (e) => {
     if (!isDragging) return;
     handleSeek(e); // Gọi lại hàm tua
-  };
-
-  // Adjust playback speed
-  const changeSpeed = (rate) => {
-    if (!videoRef.current) return;
-    videoRef.current.playbackRate = rate; // HTML5 Video API
-    setSpeed(rate);
-    setShowSpeedMenu(false); // Chọn xong thì đóng menu
-    saveState();
   };
 
   // Thay đổi âm lượng
@@ -338,22 +307,6 @@ function App() {
     return () => video.removeEventListener("loadedmetadata", handleLoaded);
   }, [currentVideo, pendingRestore]);
 
-  const openDetailsModal = (v) => {
-    setDetailsModal({
-      open: true,
-      filename: v.filename,
-      details: {
-        height: v.height,
-        width: v.width,
-        size: formatSize(v.size),
-        duration: formatTime(v.duration),
-        artist: v.custom.artist,
-        author: v.custom.author,
-        genre: v.custom.genre,
-      },
-    });
-  };
-
   useEffect(() => {
     const handleKey = (e) => {
       const active = document.activeElement;
@@ -396,24 +349,15 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Overlay để đóng sidebar khi bấm ra ngoài */}
-      <div
-        className={`sidebar-overlay ${sidebarOpen ? "open" : ""}`}
-        onClick={() => setSidebarOpen(false)}
-      />
-
       {/* Sidebar */}
-      <SideBar sidebarOpen={sidebarOpen}>
+      <SideBar>
         <VideoList
           videos={videos}
           currentVideo={currentVideo}
           setCurrentVideo={setCurrentVideo}
           fetchVideoList={fetchVideoList}
-          contextMenu={contextMenu}
-          setContextMenu={setContextMenu}
-          setSidebarOpen={setSidebarOpen}
-          openDetailsModal={openDetailsModal}
         />
+        <FileUpload fetchVideoList={fetchVideoList} />
       </SideBar>
 
       {/* Main Area */}
@@ -421,251 +365,49 @@ function App() {
         {/* Nút hamburger chỉ hiện trên mobile */}
         <button
           className="menu-toggle"
-          onClick={() => setSidebarOpen((prev) => !prev)}
+          onClick={toggleSidebar}
           aria-label="Mở/đóng danh sách video"
         >
           {sidebarOpen ? "✕" : "☰"}
         </button>
 
-        {currentVideo ? (
-          <>
-            <div
-              ref={wrapperRef}
-              className={`player-wrapper`}
-              onMouseMove={() => {
-                setShowControls(true);
-                clearTimeout(controlsTimeoutRef.current);
-                controlsTimeoutRef.current = setTimeout(
-                  () => setShowControls(false),
-                  3000,
-                );
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                setContextMenu({
-                  visible: true,
-                  x: e.clientX,
-                  y: e.clientY,
-                  type: "player",
-                  target: currentVideo,
-                });
-              }}
-            >
-              <video
-                ref={videoRef}
-                src={`${API_BASE_URL}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
-                autoPlay
-                onClick={togglePlay} // Toggle play/pause
-                onPlay={() => {
-                  setIsPlaying(true); // Trình duyệt báo để hiện nút Play/Pause cho đúng
-                  setFx({
-                    type: "play",
-                    trigger: Date.now(),
-                  });
-                }}
-                onPause={() => {
-                  setIsPlaying(false); // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
-                  saveState();
-                  setFx({
-                    type: "pause",
-                    trigger: Date.now(),
-                  });
-                }}
-                onTimeUpdate={handleTimeUpdate} // Cập nhật liên tục khi video chạy
-                onLoadedMetadata={handleLoadedMeta} // Khi video load xong, lấy duration
-                className={`video-player`}
-              />
-
-              {isAudioOnly && (
-                <div className="audio-visualizer">
-                  <div className="marquee-track">
-                    {/* Hiển thị đơn giản cho file mp3 */}
-                    <span className="marquee-text">
-                      🎵 {currentVideo.filename}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Overlay controls */}
-              <div
-                className={`controls-bar ${showControls ? "visible" : "hidden"}`}
-              >
-                {/* Thanh timeline */}
-                <div
-                  className="timeline-container"
-                  ref={timelineRef}
-                  onClick={handleSeek}
-                  onMouseDown={() => setIsDragging(true)}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={() => setIsDragging(false)}
-                  onMouseLeave={() => setIsDragging(false)}
-                >
-                  <div className="timeline-track">
-                    <div
-                      className="timeline-progress"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  {/* Thumb tròn nhỏ nằm trên đầu progress */}
-                  <div
-                    className="timeline-thumb"
-                    style={{ left: `${progress}%` }}
-                  />
-                </div>
-
-                {/* Hàng nút bên dưới */}
-                <div className="controls-row">
-                  {/* Play/Pause */}
-                  <button
-                    className="control-btn"
-                    onClick={togglePlay}
-                    aria-label={!isPlaying ? "Play" : "Pause"}
-                    aria-pressed={isPlaying}
-                  >
-                    {isPlaying ? "⏸" : "▶"}
-                    {/*videoRef.current && !videoRef.current.paused ? "⏸" : "▶"*/}
-                  </button>
-
-                  {/* Thời gian */}
-                  <span className="time-display">
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </span>
-
-                  {/* Volume */}
-                  <div className="volume-box">
-                    <button
-                      className="control-btn"
-                      onClick={toggleMute}
-                      aria-label="volume"
-                    >
-                      {volume === 0 ? "🔇" : "🔊"}
-                    </button>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={volume}
-                      onChange={handleVolume}
-                      className="volume-slider"
-                    />
-                  </div>
-
-                  <div className="speed-box">
-                    <button
-                      className="control-btn speed-toggle"
-                      onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                      title="Tốc độ phát"
-                      aria-label="Playback Speed"
-                    >
-                      {speed}x
-                    </button>
-
-                    {showSpeedMenu && (
-                      <div className="speed-menu">
-                        {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                          <div
-                            key={rate}
-                            className={`speed-item ${speed === rate ? "selected" : ""}`}
-                            onClick={() => changeSpeed(rate)}
-                          >
-                            {rate === 1 ? "Normal" : `${rate}x`}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Loop Button*/}
-                  <button
-                    className={`control-btn loop-btn ${isLoop ? "active" : ""}`}
-                    onClick={toggleLoop}
-                    title="Lặp lại"
-                  >
-                    🔄
-                  </button>
-                  <button
-                    className={`control-btn full-screen-btn`}
-                    onClick={toggleFullscreen}
-                    aria-label="Fullscreen"
-                    title="Fullscreen"
-                  >
-                    {isFullscreen ? (
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-                      </svg>
-                    ) : (
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {(fx.type === "forward" || fx.type === "backward") && (
-                <div key={fx.trigger} className="flash-layer"></div>
-              )}
-
-              <div className="fx-overlay">
-                {fx.type && (
-                  <div
-                    key={fx.trigger} //Mỗi lần key đổi, React coi đó là phần tử mới → animation CSS sẽ chạy lại từ đầu.
-                    className={`fx-icon ${
-                      fx.type === "play" || fx.type === "pause"
-                        ? "fx-pop"
-                        : fx.type === "forward"
-                          ? "fx-forward"
-                          : fx.type === "backward"
-                            ? "fx-backward"
-                            : ""
-                    } `}
-                  >
-                    {fx.type === "play" && "▶"}
-                    {fx.type === "pause" && "⏸"}
-                    {fx.type === "forward" && "+5s"}
-                    {fx.type === "backward" && "-5s"}
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="empty-state">
-            <p>👈 Chọn một video từ danh sách bên trái</p>
-          </div>
-        )}
+        <VideoPlayer
+          currentVideo={currentVideo}
+          wrapperRef={wrapperRef}
+          controlsTimeoutRef={controlsTimeoutRef}
+          videoRef={videoRef}
+          togglePlay={togglePlay}
+          setIsPlaying={setIsPlaying}
+          setFx={setFx}
+          saveState={saveState}
+          handleTimeUpdate={handleTimeUpdate}
+          handleLoadedMeta={handleLoadedMeta}
+          isAudioOnly={isAudioOnly}
+          timelineRef={timelineRef}
+          handleSeek={handleSeek}
+          setIsDragging={setIsDragging}
+          handleMouseMove={handleMouseMove}
+          progress={progress}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          toggleMute={toggleMute}
+          volume={volume}
+          handleVolume={handleVolume}
+          speed={speed}
+          setSpeed={setSpeed}
+          isLoop={isLoop}
+          toggleLoop={toggleLoop}
+          toggleFullscreen={toggleFullscreen}
+          isFullscreen={isFullscreen}
+          fx={fx}
+          duration={duration}
+        />
       </main>
 
       {/* Custom Context Menu */}
-      <VideoPlayerContextMenu
-        contextMenu={contextMenu}
-        setContextMenu={setContextMenu}
-        toggleLoop={toggleLoop}
-        openDetailsModal={openDetailsModal}
-      />
+      <VideoPlayerContextMenu toggleLoop={toggleLoop} />
 
-      <VideoDetailsModal
-        isOpen={detailsModal.open}
-        onClose={() => setDetailsModal((prev) => ({ ...prev, open: false }))}
-        filename={detailsModal.filename}
-        details={detailsModal.details || {}}
-      />
+      <VideoDetailsModal />
     </div>
   );
 }
