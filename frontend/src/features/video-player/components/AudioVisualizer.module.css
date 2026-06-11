@@ -1,0 +1,55 @@
+.audioPlaceholder {
+  position: absolute;
+  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  z-index: 5; /* Nằm dưới controls-layer nhưng trên video */
+  background: #111; /* Hoặc gradient */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.5rem;
+  pointer-events: none;
+  max-height: calc(100vh - 120px);
+}
+.audioVisualizer {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  display: flex;
+  align-items: center; /* Căn giữa theo chiều dọc */
+  overflow: hidden;
+}
+.marqueeTrack {
+  width: 100%;
+  position: relative;
+}
+
+.marqueeText {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+
+  /* Animation */
+  animation: bounceX 6s ease-in-out infinite;
+}
+@keyframes bounceX {
+  0% {
+    transform: translateX(-10%);
+  }
+  45% {
+    transform: translateX(70%);
+  } /* Điều chỉnh % tùy độ dài chữ */
+  50% {
+    transform: translateX(70%);
+  }
+  95% {
+    transform: translateX(-10%);
+  }
+  100% {
+    transform: translateX(-10%);
+  }
+}

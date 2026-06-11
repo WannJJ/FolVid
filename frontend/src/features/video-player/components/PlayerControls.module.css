@@ -1,0 +1,206 @@
+/* Thanh controls nằm đè ở bottom */
+.controlsBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  transition: opacity 0.3s ease;
+  opacity: 0;
+
+  pointer-events: none; /* Khi ẩn thì không chặn click vào video */
+}
+
+.controlsBar.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ===== HÀNG NÚT ===== */
+.controlsRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.controlBtn {
+  position: relative;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.controlBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.controlBtn.active {
+  background: rgba(59, 130, 246, 0.3); /* Xanh nhạt */
+  color: #60a5fa;
+}
+/* Focus ring cho accessibility (keyboard navigation) */
+.controlBtn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+/* Icon svg bên trong */
+.controlBtn svg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none; /* Để click xuyên qua SVG vào button */
+}
+
+/* Tooltip text */
+.controlBtn::after {
+  content: attr(aria-label); /* Lấy từ aria-label */
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+
+  transition: all 0.2s ease;
+}
+/* Mũi tên nhỏ chỉ xuống */
+.controlBtn::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+/* Hiện tooltip */
+.controlBtn:hover::after,
+.controlBtn:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+/* Trên mobile/tablet, nút 36px hơi nhỏ để chạm. */
+@media (pointer: coarse) {
+  .controlBtn {
+    width: 44px;
+    height: 44px;
+  }
+  .controlBtn svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+.loopBtn {
+  opacity: 0.2;
+}
+.loopBtn.active {
+  color: red;
+  opacity: 1;
+}
+
+.timeDisplay {
+  color: #ddd;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums; /* Giữ số không nhảy */
+  user-select: none;
+}
+
+.speedBox {
+  position: relative;
+}
+
+.speedToggle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  min-width: 48px;
+}
+
+.speedMenu {
+  position: absolute;
+  bottom: 50px; /* Nổi lên trên nút */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 6px 0;
+  min-width: 120px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+}
+
+.speedItem {
+  padding: 8px 16px;
+  color: #ddd;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: center;
+}
+
+.speedItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.speedItem.selected {
+  color: #60a5fa; /* Xanh accent */
+  font-weight: 600;
+}
+
+/* ===== VOLUME ===== */
+.volumeBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto; /* Đẩy volume sang phải cùng */
+}
+
+.volumeSlider {
+  -webkit-appearance: none;
+  width: 80px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .controlsBar {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .controlsBar > span:first-child {
+    font-size: 0.8rem;
+  }
+}

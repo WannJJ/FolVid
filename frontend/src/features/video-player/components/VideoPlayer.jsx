@@ -1,63 +1,227 @@
-import { API_BASE_URL } from "@/config/api";
+import { VideoPlayerContextMenu } from "@/features/video-actions";
 import { useUIStore } from "@/stores/useUIStore";
-import { formatTime } from "@/utils/formatTime";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AudioVisualizer } from "./AudioVisualizer";
+import { PlayerControls } from "./PlayerControls";
+import { VideoCanvas } from "./VideoCanvas";
 import styles from "./VideoPlayer.module.css";
 
 export function VideoPlayer({
   currentVideo,
-  wrapperRef,
-  controlsTimeoutRef,
   videoRef,
-  togglePlay,
-  setIsPlaying,
-  setFx,
-  saveState,
-  handleTimeUpdate,
-  handleLoadedMeta,
-  isAudioOnly,
-  timelineRef,
-  handleSeek,
-  setIsDragging,
-  handleMouseMove,
-  progress,
-  isPlaying,
-  currentTime,
-  toggleMute,
-  volume,
-  handleVolume,
-  speed,
-  setSpeed,
-  isLoop,
-  toggleLoop,
-  toggleFullscreen,
-  isFullscreen,
-  fx,
-  duration,
+  pendingRestore,
+  setPendingRestore,
 }) {
   const { openContextMenu } = useUIStore();
-  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [progress, setProgress] = useState(0); // % của timeline (0-100)
+  const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  // Đóng Speed Menu khi click ngoài
+  const [volume, setVolume] = useState(1);
+  const [latestVolume, setLatestVolume] = useState(1);
+  const [speed, setSpeed] = useState(1);
+  const [isLoop, setIsLoop] = useState(false);
+
+  const [isAudioOnly, setIsAudioOnly] = useState(false);
+  const [fx, setFx] = useState({ type: null, trigger: 0 });
+
+  const wrapperRef = useRef(null);
+  const controlsTimeoutRef = useRef(null);
+
+  // useEffect khi playing file là mp3
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(`.${styles.speedBox}`)) {
-        //if (!e.target.closest(".speed-box")) {
-        setShowSpeedMenu(false);
+    const video = videoRef.current;
+    if (!video || !currentVideo) return;
+
+    video.addEventListener("loadedmetadata", () => {
+      if (currentVideo.filename.endsWith(".mp3") && !currentVideo.thumb) {
+        setIsAudioOnly(true);
+      } else {
+        setIsAudioOnly(false);
       }
+    });
+  }, [videoRef, currentVideo]);
+
+  // Play / Pause toggle method
+  const togglePlay = useCallback(() => {
+    if (!videoRef.current) return;
+
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+    } else {
+      videoRef.current.pause();
+    }
+  }, [videoRef]);
+
+  /* 
+    Lưu trữ current state vào localStorage dùng cho lần bật sau
+    State có dạng như sau:
+    {
+      "currentVideo": videoObject,     // Có dạng {filename: "", mtime: "", size: "", width: "", height: "" ...}
+      "filename": "ten-file.mp4",      
+      "currentTime": 125.5,            // Dùng để tua (giây)
+      "playbackRate": 1.25,
+      "volume": 0.8,                   // Âm lượng 0.0 -> 1.0
+      "muted": false,                  // Có đang tắt tiếng không
+      "loop": false,                   // Có bật loop không
+      "lastUpdated": 1716393600000     // Timestamp (dùng để debug)
+    }
+    Không ghi liên tục, chỉ ghi khi pause, speed change, volume change, end, before unload
+  */
+  const saveState = useCallback(() => {
+    if (!videoRef.current || !currentVideo) return;
+
+    const state = {
+      currentVideo: currentVideo,
+      filename: currentVideo.filename,
+      playbackRate: speed,
+      volume: volume,
+      loop: isLoop,
+      lastUpdated: Date.now(),
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    localStorage.setItem("folvid_player_state", JSON.stringify(state));
   }, []);
 
-  // Adjust playback speed
-  const changeSpeed = (rate) => {
+  const toggleMute = useCallback(() => {
+    const v = volume === 0 ? latestVolume : 0;
+    videoRef.current.volume = v;
+    setVolume(v);
+    saveState();
+  }, [latestVolume, videoRef, setVolume, volume, saveState]);
+
+  // Loop Function
+  const toggleLoop = useCallback(() => {
     if (!videoRef.current) return;
-    videoRef.current.playbackRate = rate; // HTML5 Video API
-    setSpeed(rate);
-    setShowSpeedMenu(false); // Chọn xong thì đóng menu
+    const next = !isLoop;
+    videoRef.current.loop = next; // HTML5 Video API
+    setIsLoop(next);
+    saveState();
+  }, [isLoop]);
+
+  /*
+  Browser cung cấp API để đưa bất  kỳ element nào vào fullscreen, không chỉ <video>
+  Browser cũng tự cho phép bấm Esc để thoát Fullscreen, không cần implement
+  Chỉ cần implement UseEffect bấm F toggleFullscreen thôi
+  */
+  const toggleFullscreen = async () => {
+    const wrapper = wrapperRef.current; // ref trỏ đến .player-wrapper
+
+    if (!document.fullscreenElement) {
+      // Vào fullscreen
+      if (wrapper.requestFullscreen) {
+        await wrapper.requestFullscreen();
+      } else if (wrapper.webkitRequestFullscreen) {
+        /* Safari */
+        await wrapper.webkitRequestFullscreen();
+      } else if (wrapper.msRequestFullscreen) {
+        /* IE11 */
+        await wrapper.msRequestFullscreen();
+      }
+    } else {
+      // Thoát fullscreen
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        await document.msExitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      const active = document.activeElement;
+      const tag = active?.tagName;
+      const isEditable = active?.isContentEditable;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        isEditable
+      ) {
+        return;
+      }
+
+      if (e.code === "Space") {
+        e.preventDefault();
+        togglePlay();
+      }
+      if (e.code === "ArrowLeft" || e.code === "Numpad4") {
+        videoRef.current.currentTime -= 5;
+        setFx({ type: "backward", trigger: Date.now() });
+      }
+      if (e.code === "ArrowRight" || e.code === "Numpad6") {
+        videoRef.current.currentTime += 5;
+        setFx({ type: "forward", trigger: Date.now() });
+      }
+      if (e.code === "KeyM") {
+        toggleMute();
+      }
+      if (e.code === "KeyL") {
+        toggleLoop();
+      }
+      if (e.code === "KeyF") {
+        toggleFullscreen();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isPlaying, toggleMute, toggleLoop, togglePlay, videoRef]); // Dependency để togglePlay đọc đúng trạng thái
+
+  // Khi video đang chạy, cập nhật thanh timeline
+  const handleTimeUpdate = () => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    const pct = (vid.currentTime / vid.duration) * 100;
+    setProgress(pct);
+    setCurrentTime(vid.currentTime);
+  };
+
+  // Khi load xong video, lấy tổng thời lượng
+  const handleLoadedMeta = () => {
+    setDuration(videoRef.current.duration);
     saveState();
   };
+
+  // Ghi state khi pause, tua, đổi tốc độ, đổi volume, tắt tab
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // TODO: Thêm event loop, mute, bỏ bớt seeked
+    const events = ["pause", "seeked", "ratechange", "volumechange"];
+    events.forEach((e) => video.addEventListener(e, saveState));
+
+    const handleBeforeUnload = () => saveState();
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      events.forEach((e) => video.removeEventListener(e, saveState));
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [currentVideo, saveState, videoRef]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !pendingRestore) return;
+
+    const handleLoaded = () => {
+      video.playbackRate = pendingRestore.playbackRate;
+      setSpeed(pendingRestore.playbackRate);
+      video.volume = pendingRestore.volume;
+      setVolume(pendingRestore.volume);
+      video.loop = pendingRestore.loop;
+      setIsLoop(pendingRestore.loop);
+      // Nếu muốn auto-play lại thì: video.play();
+      setPendingRestore(null); // Xóa tạm
+    };
+
+    video.addEventListener("loadedmetadata", handleLoaded);
+    return () => video.removeEventListener("loadedmetadata", handleLoaded);
+  }, [currentVideo, pendingRestore, setPendingRestore, videoRef]);
+
   return (
     <>
       {currentVideo ? (
@@ -83,172 +247,40 @@ export function VideoPlayer({
               });
             }}
           >
-            <video
-              ref={videoRef}
-              src={`${API_BASE_URL}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
-              autoPlay
-              onClick={togglePlay} // Toggle play/pause
-              onPlay={() => {
-                setIsPlaying(true); // Trình duyệt báo để hiện nút Play/Pause cho đúng
-                setFx({
-                  type: "play",
-                  trigger: Date.now(),
-                });
-              }}
-              onPause={() => {
-                setIsPlaying(false); // Trình duyệt báo dừng để hiện nút Play/Pause cho đúng
-                saveState();
-                setFx({
-                  type: "pause",
-                  trigger: Date.now(),
-                });
-              }}
-              onTimeUpdate={handleTimeUpdate} // Cập nhật liên tục khi video chạy
-              onLoadedMetadata={handleLoadedMeta} // Khi video load xong, lấy duration
-              className={styles.videoPlayer}
+            <VideoCanvas
+              videoRef={videoRef}
+              currentVideo={currentVideo}
+              togglePlay={togglePlay}
+              setIsPlaying={setIsPlaying}
+              setFx={setFx}
+              saveState={saveState}
+              handleTimeUpdate={handleTimeUpdate}
+              handleLoadedMeta={handleLoadedMeta}
             />
 
-            {isAudioOnly && (
-              <div className={styles.audioVisualizer}>
-                <div className={styles.marqueeTrack}>
-                  {/* Hiển thị đơn giản cho file mp3 */}
-                  <span className={styles.marqueeText}>
-                    🎵 {currentVideo.filename}
-                  </span>
-                </div>
-              </div>
-            )}
+            {isAudioOnly && <AudioVisualizer currentVideo={currentVideo} />}
 
             {/* Overlay controls */}
-            <div
-              className={`${styles.controlsBar} ${showControls ? styles.visible : styles.hidden}`}
-            >
-              {/* Thanh timeline */}
-              <div
-                className={styles.timelineContainer}
-                ref={timelineRef}
-                onClick={handleSeek}
-                onMouseDown={() => setIsDragging(true)}
-                onMouseMove={handleMouseMove}
-                onMouseUp={() => setIsDragging(false)}
-                onMouseLeave={() => setIsDragging(false)}
-              >
-                <div className={styles.timelineTrack}>
-                  <div
-                    className={styles.timelineProgress}
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                {/* Thumb tròn nhỏ nằm trên đầu progress */}
-                <div
-                  className={styles.timelineThumb}
-                  style={{ left: `${progress}%` }}
-                />
-              </div>
-
-              {/* Hàng nút bên dưới */}
-              <div className={styles.controlsRow}>
-                {/* Play/Pause */}
-                <button
-                  className={styles.controlBtn}
-                  onClick={togglePlay}
-                  aria-label={!isPlaying ? "Play" : "Pause"}
-                  aria-pressed={isPlaying}
-                >
-                  {isPlaying ? "⏸" : "▶"}
-                  {/*videoRef.current && !videoRef.current.paused ? "⏸" : "▶"*/}
-                </button>
-
-                {/* Thời gian */}
-                <span className={styles.timeDisplay}>
-                  {formatTime(currentTime)} / {formatTime(duration)}
-                </span>
-
-                {/* Volume */}
-                <div className={styles.volumeBox}>
-                  <button
-                    className={styles.controlBtn}
-                    onClick={toggleMute}
-                    aria-label="volume"
-                  >
-                    {volume === 0 ? "🔇" : "🔊"}
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={volume}
-                    onChange={handleVolume}
-                    className={styles.volumeSlider}
-                  />
-                </div>
-
-                <div className={styles.speedBox}>
-                  <button
-                    className={`${styles.controlBtn} ${styles.speedToggle}`}
-                    onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                    title="Tốc độ phát"
-                    aria-label="Playback Speed"
-                  >
-                    {speed}x
-                  </button>
-
-                  {showSpeedMenu && (
-                    <div className={styles.speedMenu}>
-                      {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
-                        <div
-                          key={rate}
-                          className={`${styles.speedItem} ${speed === rate ? styles.selected : ""}`}
-                          onClick={() => changeSpeed(rate)}
-                        >
-                          {rate === 1 ? "Normal" : `${rate}x`}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Loop Button*/}
-                <button
-                  className={`${styles.controlBtn} ${styles.loopBtn} ${isLoop ? styles.active : ""}`}
-                  onClick={toggleLoop}
-                  title="Lặp lại"
-                >
-                  🔄
-                </button>
-                <button
-                  className={`${styles.controlBtn}`}
-                  onClick={toggleFullscreen}
-                  aria-label="Fullscreen"
-                  title="Fullscreen"
-                >
-                  {isFullscreen ? (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-                    </svg>
-                  ) : (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
+            <PlayerControls
+              showControls={showControls}
+              videoRef={videoRef}
+              currentTime={currentTime}
+              progress={progress}
+              setProgress={setProgress}
+              togglePlay={togglePlay}
+              isPlaying={isPlaying}
+              toggleMute={toggleMute}
+              volume={volume}
+              setVolume={setVolume}
+              setLatestVolume={setLatestVolume}
+              duration={duration}
+              speed={speed}
+              setSpeed={setSpeed}
+              saveState={saveState}
+              isLoop={isLoop}
+              toggleLoop={toggleLoop}
+              toggleFullscreen={toggleFullscreen}
+            />
 
             {(fx.type === "forward" || fx.type === "backward") && (
               <div key={fx.trigger} className={styles.flashLayer}></div>
@@ -282,6 +314,9 @@ export function VideoPlayer({
           <p>👈 Chọn một video từ danh sách bên trái</p>
         </div>
       )}
+
+      {/* Custom Context Menu */}
+      <VideoPlayerContextMenu toggleLoop={toggleLoop} />
     </>
   );
 }

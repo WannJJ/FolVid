@@ -1,0 +1,47 @@
+/* ===== TIMELINE ===== */
+.timelineContainer {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.timelineTrack {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  position: relative;
+}
+
+.timelineProgress {
+  height: 100%;
+  background: #3b82f6; /* Màu xanh accent */
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.timelineThumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+/* Hover vào timeline thì thumb hiện ra và phóng to track */
+.timelineContainer:hover .timelineThumb {
+  opacity: 1;
+}
+.timelineContainer:hover .timelineTrack {
+  height: 6px;
+}
