@@ -1,30 +1,30 @@
 import { formatTime } from "@/utils/formatTime";
 import { useEffect, useState } from "react";
+import { usePlayer } from "../contexts/PlayerContext";
 import styles from "./PlayerControls.module.css";
 import { Timeline } from "./Timeline";
 
-export function PlayerControls({
-  showControls,
-  videoRef,
-  currentTime,
-  progress,
-  setProgress,
-  togglePlay,
-  isPlaying,
-  toggleMute,
-  volume,
-  setVolume,
-  setLatestVolume,
-  duration,
-  speed,
-  setSpeed,
-  saveState,
-  isLoop,
-  toggleLoop,
-  toggleFullscreen,
-}) {
+export function PlayerControls() {
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const {
+    videoRef,
+    isPlaying,
+    currentTime,
+    duration,
+    showControls,
+    volume,
+    setVolume,
+    setLatestVolume,
+    isLoop,
+    toggleLoop,
+    saveState,
+    toggleMute,
+    speed,
+    setSpeed,
+    togglePlay,
+    toggleFullscreen,
+  } = usePlayer();
 
   /* Theo dõi trạng thái Fullscreen */
   useEffect(() => {
@@ -74,11 +74,7 @@ export function PlayerControls({
     <div
       className={`${styles.controlsBar} ${showControls ? styles.visible : styles.hidden}`}
     >
-      <Timeline
-        videoRef={videoRef}
-        progress={progress}
-        setProgress={setProgress}
-      />
+      <Timeline />
 
       {/* Hàng nút bên dưới */}
       <div className={styles.controlsRow}>
@@ -90,7 +86,6 @@ export function PlayerControls({
           aria-pressed={isPlaying}
         >
           {isPlaying ? "⏸" : "▶"}
-          {/*videoRef.current && !videoRef.current.paused ? "⏸" : "▶"*/}
         </button>
 
         {/* Thời gian */}

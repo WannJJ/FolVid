@@ -1,16 +1,20 @@
 import { API_BASE_URL } from "@/config/api";
+import { useVideoStore } from "@/stores/useVideoStore";
+import { usePlayer } from "../contexts/PlayerContext";
 import styles from "./VideoPlayer.module.css";
 
-export function VideoCanvas({
-  videoRef,
-  currentVideo,
-  togglePlay,
-  setIsPlaying,
-  setFx,
-  saveState,
-  handleTimeUpdate,
-  handleLoadedMeta,
-}) {
+export function VideoCanvas() {
+  const {
+    videoRef,
+    setIsPlaying,
+    handleTimeUpdate,
+    handleLoadedMeta,
+    setFx,
+    saveState,
+    togglePlay,
+  } = usePlayer();
+  const { currentVideo } = useVideoStore();
+
   return (
     <video
       ref={videoRef}

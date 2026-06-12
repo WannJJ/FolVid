@@ -1,9 +1,12 @@
 import { useRef, useState } from "react";
+import { usePlayer } from "../contexts/PlayerContext";
 import styles from "./Timeline.module.css";
 
-export function Timeline({ videoRef, progress, setProgress }) {
+export function Timeline() {
   const [isDragging, setIsDragging] = useState(false);
   const timelineRef = useRef(null);
+  const { videoRef, progress, setProgress } = usePlayer();
+
   // Tua khi click vào thanh timeline
   const handleSeek = (e) => {
     const bar = timelineRef.current;
