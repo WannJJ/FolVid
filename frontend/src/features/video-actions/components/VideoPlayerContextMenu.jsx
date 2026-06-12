@@ -1,8 +1,10 @@
 import { ContextMenu, MenuItem } from "@/components/ui/context-menu";
+import { usePlayer } from "@/features/video-player/contexts/PlayerContext";
 import { useUIStore } from "@/stores/useUIStore";
 
-export function VideoPlayerContextMenu({ toggleLoop }) {
+export function VideoPlayerContextMenu() {
   const { contextMenu, closeContextMenu, openDetailsModal } = useUIStore();
+  const { toggleLoop } = usePlayer();
 
   return (
     <ContextMenu

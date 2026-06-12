@@ -1,7 +1,9 @@
+import { useVideoStore } from "@/stores/useVideoStore";
 import { useMemo, useState } from "react";
 import styles from "./FilterPanel.module.css";
 
-export function FilterPanel({ videos, setFilters, filters, setSearch }) {
+export function FilterPanel({ setFilters, filters, setSearch }) {
+  const { videos } = useVideoStore();
   const [showFilters, setShowFilters] = useState(false); // đóng/mở panel
 
   const genres = useMemo(() => {

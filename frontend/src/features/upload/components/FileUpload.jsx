@@ -1,7 +1,9 @@
 import { API_BASE_URL } from "@/config/api";
+import { useVideoStore } from "@/stores/useVideoStore";
 import { useState } from "react";
 import styles from "./FileUpload.module.css";
-export function FileUpload({ fetchVideoList }) {
+export function FileUpload() {
+  const { fetchVideoList } = useVideoStore();
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   const handleDropFile = (e) => {

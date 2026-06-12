@@ -1,18 +1,13 @@
 import { VideoListContextMenu } from "@/features/video-actions/";
-import { useUIStore } from "@/stores/useUIStore";
+import { useVideoStore } from "@/stores/useVideoStore";
 import { useMemo, useState } from "react";
 import { FilterPanel } from "./FilterPanel";
 import { SearchBar } from "./SearchBar";
 import styles from "./VideoList.module.css";
 import { VideoListItem } from "./VideoListItem";
 
-export function VideoList({
-  videos,
-  currentVideo,
-  setCurrentVideo,
-  fetchVideoList,
-}) {
-  const { openDetailsModal, setSidebarOpen } = useUIStore();
+export function VideoList() {
+  const { videos } = useVideoStore();
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
   const [tempName, setTempName] = useState(""); // Giá trị tạm trong input
   const [search, setSearch] = useState("");
@@ -69,7 +64,6 @@ export function VideoList({
 
       {/* ===== FILTER PANEL (Accordion) ===== */}
       <FilterPanel
-        videos={videos}
         setFilters={setFilters}
         filters={filters}
         setSearch={setSearch}
@@ -84,24 +78,16 @@ export function VideoList({
           <VideoListItem
             key={v.filename}
             v={v}
-            currentVideo={currentVideo}
-            setCurrentVideo={setCurrentVideo}
             editingName={editingName}
             setEditingName={setEditingName}
             tempName={tempName}
             setTempName={setTempName}
-            fetchVideoList={fetchVideoList}
-            setSidebarOpen={setSidebarOpen}
           />
         ))}
       </ul>
 
       {/* ===== CONTEXT MENU ===== */}
-      <VideoListContextMenu
-        setCurrentVideo={setCurrentVideo}
-        startRename={startRename}
-        openDetailsModal={openDetailsModal}
-      />
+      <VideoListContextMenu startRename={startRename} />
     </>
   );
 }

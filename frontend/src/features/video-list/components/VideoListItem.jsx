@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/config/api";
 import { videoApi } from "@/services/videoApi";
 import { useUIStore } from "@/stores/useUIStore";
+import { useVideoStore } from "@/stores/useVideoStore";
 import { formatTime } from "@/utils/formatTime";
 import { useEffect, useState } from "react";
 import { useInView } from "../hooks/useInView";
@@ -8,17 +9,14 @@ import styles from "./VideoListItem.module.css";
 
 export function VideoListItem({
   v,
-  currentVideo,
-  setCurrentVideo,
   editingName,
   setEditingName,
   tempName,
   setTempName,
-  fetchVideoList,
-  setSidebarOpen,
 }) {
   const [ref, isInView] = useInView();
-  const { openContextMenu } = useUIStore();
+  const { openContextMenu, setSidebarOpen } = useUIStore();
+  const { currentVideo, setCurrentVideo, fetchVideoList } = useVideoStore();
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
@@ -53,6 +51,7 @@ export function VideoListItem({
       if (res.ok) {
         // Cập nhật lại danh sách
         const data = await fetchVideoList();
+
         // Nếu video đang phát bị đổi tên, cập nhật lại currentVideo
         if (currentVideo.filename === oldName) {
           const selectedVideo = data.find((e) => e.filename === tempName);
