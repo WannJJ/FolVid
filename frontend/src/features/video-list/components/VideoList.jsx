@@ -18,6 +18,7 @@ export function VideoList() {
     maxDuration: "",
     resolution: "",
   });
+
   // Tạo list filtered Videos
   const filteredVideos = useMemo(() => {
     return videos.filter((v) => {

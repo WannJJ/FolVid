@@ -1,9 +1,8 @@
 import { useUIStore } from "@/stores/useUIStore";
 import { useEffect } from "react";
 import styles from "./SideBar.module.css";
-export default function SideBar({ children }) {
+export function SideBar({ children }) {
   const { sidebarOpen, setSidebarOpen } = useUIStore();
-
   useEffect(() => {
     const handler = (e) => {
       // Chỉ prevent nếu click vào vùng của sidebar

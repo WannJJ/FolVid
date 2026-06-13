@@ -5,6 +5,7 @@ import { useVideoStore } from "@/stores/useVideoStore";
 export function VideoListContextMenu({ startRename }) {
   const { setCurrentVideo } = useVideoStore();
   const { contextMenu, closeContextMenu, openDetailsModal } = useUIStore();
+
   return (
     <ContextMenu
       visible={contextMenu.visible && contextMenu.type === "listItem"}
