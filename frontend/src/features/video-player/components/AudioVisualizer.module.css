@@ -32,7 +32,8 @@
   font-weight: bold;
   color: #fff;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-
+}
+.marqueeText.active {
   /* Animation */
   animation: bounceX 6s ease-in-out infinite;
 }
