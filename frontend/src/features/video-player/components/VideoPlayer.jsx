@@ -1,9 +1,10 @@
 import { VideoPlayerContextMenu } from "@/features/video-actions";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { useUIStore } from "@/stores/useUIStore";
 import { useVideoStore } from "@/stores/useVideoStore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePlayer } from "../contexts/PlayerContext";
+import { useAutoHideControls } from "../hooks/useAutoHideControls";
+import { usePlayerContextMenu } from "../hooks/usePlayerContextMenu";
 import { AudioVisualizer } from "./AudioVisualizer";
 import { FXAnimation } from "./FXAnimation";
 import { PlayerControls } from "./PlayerControls";
@@ -11,11 +12,9 @@ import { VideoCanvas } from "./VideoCanvas";
 import styles from "./VideoPlayer.module.css";
 
 export function VideoPlayer() {
-  const controlsTimeoutRef = useRef(null);
   const [isAudioOnly, setIsAudioOnly] = useState(false);
   const { videoRef, wrapperRef, setShowControls } = usePlayer();
   const { currentVideo } = useVideoStore();
-  const { openContextMenu } = useUIStore();
 
   // Tự động đổi title khi chuyển video
   useDocumentTitle(
@@ -37,6 +36,13 @@ export function VideoPlayer() {
     });
   }, [videoRef, currentVideo]);
 
+  const handleMouseMove = useAutoHideControls({
+    delay: 3000,
+    onShow: () => setShowControls(true),
+    onHide: () => setShowControls(false),
+  });
+  const handleContextMenu = usePlayerContextMenu();
+
   return (
     <>
       {currentVideo ? (
@@ -44,23 +50,8 @@ export function VideoPlayer() {
           <div
             ref={wrapperRef}
             className={styles.playerWrapper}
-            onMouseMove={() => {
-              setShowControls(true);
-              clearTimeout(controlsTimeoutRef.current);
-              controlsTimeoutRef.current = setTimeout(
-                () => setShowControls(false),
-                3000,
-              );
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              openContextMenu({
-                x: e.clientX,
-                y: e.clientY,
-                type: "player",
-                target: currentVideo,
-              });
-            }}
+            onMouseMove={handleMouseMove}
+            onContextMenu={handleContextMenu}
           >
             <VideoCanvas />
 
@@ -77,7 +68,6 @@ export function VideoPlayer() {
         </div>
       )}
 
-      {/* Custom Context Menu */}
       <VideoPlayerContextMenu />
     </>
   );
