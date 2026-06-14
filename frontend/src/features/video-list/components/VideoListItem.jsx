@@ -1,11 +1,10 @@
-import { API_BASE_URL } from "@/config/api";
 import { videoApi } from "@/services/videoApi";
 import { useUIStore } from "@/stores/useUIStore";
 import { useVideoStore } from "@/stores/useVideoStore";
-import { formatTime } from "@/utils/formatTime";
 import { useEffect, useState } from "react";
 import { useInView } from "../hooks/useInView";
 import styles from "./VideoListItem.module.css";
+import { VideoThumbnail } from "./VideoThumbnail";
 
 export function VideoListItem({
   v,
@@ -90,21 +89,11 @@ export function VideoListItem({
     >
       {showContent ? (
         <>
-          <div className={styles.thumbWrap}>
-            {v.thumb ? (
-              <img
-                className={styles.thumbImage}
-                src={`${API_BASE_URL}${v.thumb}`}
-                alt=""
-                loading="lazy"
-              />
-            ) : (
-              <div className={styles.thumbFallback}>
-                {v.filename.endsWith(".mp3") ? "🎵" : "🎬"}
-              </div>
-            )}
-            <div className={styles.duration}>{formatTime(v.duration)}</div>
-          </div>
+          <VideoThumbnail
+            filename={v.filename}
+            thumb={v.thumb}
+            duration={v.duration}
+          />
 
           <div className={styles.info}>
             {editingName === v.filename ? (
