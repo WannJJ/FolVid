@@ -62,27 +62,6 @@ export function VideoThumbnail({ filename, thumb, duration }) {
         videoSrc={videoUrl}
         isHovered={isHovered}
       />
-      {/*
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          opacity: isHovered ? 1 : 0, // Hiện khi hover
-          transition: "opacity 0.15s ease",
-          zIndex: 2,
-          pointerEvents: "none", // Để click xuyên qua video
-        }}
-      />
-      */}
 
       <div className={styles.duration}>{formatTime(duration)}</div>
     </div>

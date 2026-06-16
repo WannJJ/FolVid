@@ -10,6 +10,7 @@ const VIDEO_DIR = path.join(__dirname, "videos");
 const CACHE_DIR = path.join(__dirname, "cache");
 const INFO_DIR = path.join(CACHE_DIR, "info");
 const THUMB_DIR = path.join(CACHE_DIR, "thumbs");
+const STORYBOARD_DIR = path.join(CACHE_DIR, "storyboard");
 const videoExts = [".mp4", ".mp3", ".webm", ".ogg", ".mov"];
 
 //const app = require('./app');
@@ -48,6 +49,9 @@ app.use("/videos", express.static(VIDEO_DIR));
 
 // Phục vụ ảnh thumbnail tĩnh
 app.use("/cache/thumbs", express.static(THUMB_DIR));
+
+// Phục vụ storyboard, dùng để seek preview
+app.use("/cache/storyboard", express.static(STORYBOARD_DIR));
 
 // API trả về danh sách video trong thư mục videos/
 app.get("/api/videos", (req, res) => {

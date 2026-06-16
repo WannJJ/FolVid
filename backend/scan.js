@@ -7,6 +7,7 @@ const VIDEO_DIR = path.join(__dirname, "videos");
 const CACHE_DIR = path.join(__dirname, "cache");
 const THUMB_DIR = path.join(CACHE_DIR, "thumbs");
 const INFO_DIR = path.join(CACHE_DIR, "info");
+const STORYBOARD_DIR = path.join(CACHE_DIR, "storyboard");
 
 const VIDEO_EXTS = [".mp3", ".mp4", ".webm", ".ogg", ".mov"];
 
@@ -17,7 +18,7 @@ const INTERVAL_SECONDS = 10; // Mỗi 10 giây lấy 1 frame
 const SPRITE_COLS = 10; // Số cột trong sprite grid
 
 // Đảm bảo thư mục cache tồn tại
-[THUMB_DIR, INFO_DIR].forEach((dir) => {
+[THUMB_DIR, INFO_DIR, STORYBOARD_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -164,7 +165,13 @@ async function buildCache() {
         thumbUrl = `/cache/thumbs/${file}.jpg`;
 
         // Tạo storyboard
-        sb = generateStoryboard(videoPath, baseName);
+        const storyboard = generateStoryboard(videoPath, baseName);
+        sb = {
+          vtt: `/cache/storyboard/${baseName}.storyboard.vtt`,
+          json: `/cache/storyboard/${baseName}.storyboard.json`,
+          sprite: `/cache/storyboard/${baseName}.sprite.jpg`,
+          frames: storyboard.totalFrames,
+        };
       }
 
       // Đọc custom metadata
@@ -182,12 +189,7 @@ async function buildCache() {
         bitrate: meta.bitrate,
         thumb: thumbUrl, // sẽ là null nếu là mp3
         custom,
-        storyboard: {
-          vtt: `${baseName}.storyboard.vtt`,
-          json: `${baseName}.storyboard.json`,
-          sprite: `${baseName}.sprite.jpg`,
-          frames: sb.totalFrames,
-        },
+        storyboard: sb, // sẽ là null nếu là mp3
       };
 
       fs.writeFileSync(infoPath, JSON.stringify(cacheData, null, 2));
@@ -222,9 +224,9 @@ function generateStoryboard(videoPath, baseName) {
 
   // Đảm bảo ít nhất 1 row
   const safeRows = Math.max(rows, 1);
-  const outputSprite = path.join(VIDEO_DIR, `${baseName}.sprite.jpg`);
-  const outputVtt = path.join(VIDEO_DIR, `${baseName}.storyboard.vtt`);
-  const outputJson = path.join(VIDEO_DIR, `${baseName}.storyboard.json`);
+  const outputSprite = path.join(STORYBOARD_DIR, `${baseName}.sprite.jpg`);
+  const outputVtt = path.join(STORYBOARD_DIR, `${baseName}.storyboard.vtt`);
+  const outputJson = path.join(STORYBOARD_DIR, `${baseName}.storyboard.json`);
 
   // 1. Tạo sprite sheet bằng ffmpeg
   // fps=1/10 → 1 frame mỗi 10 giây
@@ -261,9 +263,11 @@ function generateStoryboard(videoPath, baseName) {
       y,
       w: THUMB_WIDTH,
       h: THUMB_HEIGHT,
-      sprite: `${baseName}.sprite.jpg`,
+      sprite: `/cache/storyboard/${baseName}.sprite.jpg`,
     });
   }
+
+  fs.writeFileSync(outputVtt, vttContent, "utf8");
 
   // 3. Viết file JSON tiện cho frontend
   fs.writeFileSync(
@@ -287,7 +291,11 @@ function generateStoryboard(videoPath, baseName) {
     `✅ Storyboard done: ${baseName} (${totalFrames} frames, ${SPRITE_COLS}x${safeRows} grid)`,
   );
 
-  return { duration, totalFrames, sprite: outputSprite };
+  return {
+    duration,
+    totalFrames,
+    sprite: outputSprite,
+  };
 }
 
 function formatTime(seconds) {
@@ -296,55 +304,6 @@ function formatTime(seconds) {
   const s = Math.floor(seconds % 60);
   const ms = Math.floor((seconds % 1) * 1000);
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
-}
-
-function scanVideos() {
-  const files = fs.readdirSync(VIDEO_DIR);
-  const videos = files.filter((f) =>
-    VIDEO_EXTS.includes(path.extname(f).toLowerCase()),
-  );
-
-  const manifest = [];
-
-  for (const file of videos) {
-    const videoPath = path.join(VIDEO_DIR, file);
-    const baseName = path.basename(file, path.extname(file));
-
-    console.log(`\n🔍 Scanning: ${file}`);
-
-    // Tạo info.json cơ bản (nếu chưa có)
-    const infoPath = path.join(VIDEO_DIR, `${baseName}.info.json`);
-    let info = {};
-    if (fs.existsSync(infoPath)) {
-      info = JSON.parse(fs.readFileSync(infoPath, "utf8"));
-    }
-
-    // Tạo storyboard
-    const sb = generateStoryboard(videoPath, baseName);
-
-    info = {
-      ...info,
-      filename: file,
-      duration: sb.duration,
-      storyboard: {
-        vtt: `${baseName}.storyboard.vtt`,
-        json: `${baseName}.storyboard.json`,
-        sprite: `${baseName}.sprite.jpg`,
-        frames: sb.totalFrames,
-      },
-    };
-
-    fs.writeFileSync(infoPath, JSON.stringify(info, null, 2));
-    manifest.push(info);
-  }
-
-  // Viết manifest tổng (nếu cần)
-  fs.writeFileSync(
-    path.join(VIDEO_DIR, "manifest.json"),
-    JSON.stringify(manifest, null, 2),
-  );
-
-  console.log(`\n🎉 Done! Scanned ${videos.length} videos.`);
 }
 
 // Chạy chính
