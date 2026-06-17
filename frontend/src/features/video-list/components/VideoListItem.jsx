@@ -1,4 +1,5 @@
 import { videoApi } from "@/services/videoApi";
+import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { useVideoStore } from "@/stores/useVideoStore";
 import { useEffect, useState } from "react";
@@ -16,7 +17,10 @@ export function VideoListItem({
   const [ref, isInView] = useInView();
   const { openContextMenu, setSidebarOpen } = useUIStore();
   const { currentVideo, setCurrentVideo, fetchVideoList } = useVideoStore();
+  const { playlist, addToPlaylist, isInPlaylist } = usePlaylistStore();
   const [showContent, setShowContent] = useState(false);
+
+  const inPlaylist = isInPlaylist(v);
 
   useEffect(() => {
     if (isInView) {
@@ -93,6 +97,7 @@ export function VideoListItem({
             filename={v.filename}
             thumb={v.thumb}
             duration={v.duration}
+            isAudio={v.type === "audio"}
           />
 
           <div className={styles.info}>
@@ -126,6 +131,20 @@ export function VideoListItem({
               </>
             )}
           </div>
+
+          {/* Chỉ hiện nút Add nếu đã có playlist */}
+          {playlist !== null && (
+            <button
+              className={`btn-add-playlist ${inPlaylist ? "added" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!inPlaylist) addToPlaylist(v);
+              }}
+              disabled={inPlaylist}
+            >
+              {inPlaylist ? "✓" : "+"}
+            </button>
+          )}
         </>
       ) : (
         // Skeleton placeholder

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AppLayout } from "././components/layout";
 import "./App.css";
+import { PlaylistToggle } from "./features/play-list";
 import { FileUpload } from "./features/upload";
 import { VideoList } from "./features/video-list/";
 import { VideoPlayer } from "./features/video-player";
@@ -9,6 +10,7 @@ import { useVideoStore } from "./stores/useVideoStore";
 
 function App() {
   const { initialize } = useVideoStore();
+  // CHẾ ĐỘ PLAYLIST (optional)
 
   useEffect(() => {
     initialize();
@@ -18,7 +20,7 @@ function App() {
     <AppLayout
       sidebarContent={
         <>
-          <VideoList /> <FileUpload />
+          <VideoList /> <FileUpload /> <PlaylistToggle />
         </>
       }
       mainContent={

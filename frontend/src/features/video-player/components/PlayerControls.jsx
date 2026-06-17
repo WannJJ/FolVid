@@ -1,4 +1,6 @@
+import usePlaylistStore from "@/stores/usePlaylistStore";
 import { formatTime } from "@/utils/formatTime";
+import { Repeat, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePlayer } from "../contexts/PlayerContext";
 import styles from "./PlayerControls.module.css";
@@ -25,6 +27,16 @@ export function PlayerControls() {
     togglePlay,
     toggleFullscreen,
   } = usePlayer();
+  const {
+    playlist,
+    currentIndex,
+    isRepeat,
+    isShuffle,
+    playNext,
+    playPrevious,
+    toggleRepeat,
+    toggleShuffle,
+  } = usePlaylistStore();
 
   /* Theo dõi trạng thái Fullscreen */
   useEffect(() => {
@@ -100,7 +112,7 @@ export function PlayerControls() {
             onClick={toggleMute}
             aria-label="volume"
           >
-            {volume === 0 ? "🔇" : "🔊"}
+            {volume === 0 ? <VolumeX /> : <Volume2 />}
           </button>
           <input
             type="range"
@@ -142,9 +154,10 @@ export function PlayerControls() {
         <button
           className={`${styles.controlBtn} ${styles.loopBtn} ${isLoop ? styles.active : ""}`}
           onClick={toggleLoop}
+          aria-label="loop"
           title="Lặp lại"
         >
-          🔄
+          <Repeat />
         </button>
         <button
           className={`${styles.controlBtn}`}
@@ -176,6 +189,32 @@ export function PlayerControls() {
             </svg>
           )}
         </button>
+
+        {/* Nếu có playlist → hiện controls playlist */}
+        {playlist !== null && (
+          <div className="playlist-controls-bar">
+            <button
+              className={isShuffle ? "active" : ""}
+              onClick={toggleShuffle}
+            >
+              🔀
+            </button>
+            <button onClick={playPrevious} disabled={currentIndex <= 0}>
+              ⏮️ Prev
+            </button>
+            <button
+              onClick={playNext}
+              disabled={
+                currentIndex >= playlist.length - 1 && !isRepeat && !isShuffle
+              }
+            >
+              Next ⏭️
+            </button>
+            <button className={isRepeat ? "active" : ""} onClick={toggleRepeat}>
+              🔁
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

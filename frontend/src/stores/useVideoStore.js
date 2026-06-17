@@ -2,6 +2,7 @@
 import { videoApi } from "@/services/videoApi";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import usePlaylistStore from "./usePlaylistStore";
 
 export const useVideoStore = create(
   devtools(
@@ -51,6 +52,34 @@ export const useVideoStore = create(
         set({ pendingRestore: state }, false, "player/setPendingRestore");
       },
 
+      /**
+       * Phát một video (entry point chính)
+       *
+       * - Nếu KHÔNG có playlist: phát trực tiếp video đó
+       * - Nếu CÓ playlist: thêm video vào playlist rồi phát từ playlist
+       */
+      playVideo: (videoName) => {
+        const playlist = usePlaylistStore.getState().playlist;
+
+        if (playlist === null) {
+          // Không có playlist → phát trực tiếp
+          set({ currentVideo: videoName });
+        } else {
+          // Có playlist → thêm vào playlist rồi phát
+          const { addToPlaylist, playAtIndex } = usePlaylistStore.getState();
+
+          if (!playlist.includes(videoName)) {
+            addToPlaylist(videoName);
+          }
+          // Tìm index và phát
+          const newPlaylist = usePlaylistStore.getState().playlist;
+          const index = newPlaylist.indexOf(videoName);
+          if (index !== -1) {
+            playAtIndex(index);
+          }
+        }
+      },
+
       /** Gọi một lần lúc app mởi khởi tạo, dùng để fetchVideoList
        *  và quyết định video bật video nào đầu tiên */
       initialize: async () => {
@@ -94,6 +123,9 @@ export const useVideoStore = create(
           });
         }
       },
+
+      /** Clear */
+      clearCurrentVideo: () => set({ currentVideo: null }),
     }),
     { name: "VideoStore" }, // tên hiển thị trên Redux DevTools
   ),

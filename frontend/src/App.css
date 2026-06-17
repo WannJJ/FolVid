@@ -25,108 +25,278 @@ body,
   background: #000;
 }
 
+.btn-add-playlist {
+  padding: 4px 10px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 32px;
+  transition: all 0.2s;
+}
+
+.btn-add-playlist:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.btn-add-playlist:disabled,
+.btn-add-playlist.added {
+  background: #10b981;
+  cursor: default;
+  opacity: 0.8;
+}
+
 /* ============================================
-   MAIN AREA & VIDEO
+   PLAYLIST PANEL
    ============================================ */
-.main-area {
-  flex: 1;
-  background: #000;
+
+.playlist-panel {
+  width: 320px;
+  min-width: 320px;
+  background: #141414;
+  border-left: 1px solid #2a2a2a;
   display: flex;
   flex-direction: column;
-  position: relative;
-  min-width: 0; /* Quan trọng để flex item không vượt quá container */
+  animation: slideIn 0.2s ease;
 }
 
-/* ============================================
-   MOBILE TOGGLE BUTTON (Hamburger)
-   ============================================ */
-.menu-toggle {
-  display: none; /* Ẩn trên desktop */
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 100;
-  background: rgba(30, 30, 30, 0.9);
-  border: 1px solid #444;
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  backdrop-filter: blur(4px);
-}
-
-.menu-toggle:hover {
-  background: #333;
-}
-
-/* ============================================
-   RESPONSIVE: TABLET & MOBILE (< 900px)
-   ============================================ */
-@media (max-width: 900px) {
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    z-index: 90;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
   }
-
-  .sidebar.open {
+  to {
+    opacity: 1;
     transform: translateX(0);
   }
+}
 
-  /* Overlay khi sidebar mở */
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 80;
-  }
+.playlist-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-  .sidebar-overlay.open {
-    display: block;
-  }
+.playlist-header span:first-child {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
 
-  .menu-toggle {
-    display: block; /* Hiện nút hamburger */
-  }
+.playlist-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .video-player {
-    max-height: calc(100vh - 140px);
-  }
+.playlist-count {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.btn-delete-playlist {
+  padding: 6px 10px;
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.btn-delete-playlist:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Playlist controls (inside panel) */
+.playlist-controls {
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.playlist-controls .ctrl-btn {
+  padding: 8px 14px;
+  background: #2a2a2a;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.playlist-controls .ctrl-btn:hover:not(:disabled) {
+  background: #3a3a3a;
+}
+
+.playlist-controls .ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.playlist-controls .ctrl-btn.active {
+  background: #10b981;
+  color: #fff;
+}
+
+/* Playlist list */
+.playlist-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.playlist-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ============================================
+   PLAYLIST ITEM
+   ============================================ */
+
+.playlist-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: #1e1e1e;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.playlist-item:hover {
+  background: #2a2a2a;
+}
+
+.playlist-item.playing {
+  background: #3b82f6;
+}
+
+.playlist-item.playing:hover {
+  background: #2563eb;
+}
+.playlist-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.drag-handle {
+  margin-right: 10px;
+  color: #666;
+  cursor: grab;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.playlist-item .video-name {
+  flex: 1;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-item.playing .video-name {
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn-remove {
+  padding: 2px 8px;
+  background: transparent;
+  color: #ef4444;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.playlist-item:hover .btn-remove {
+  opacity: 1;
+}
+
+.btn-remove:hover {
+  background: #ef4444;
+  color: #fff;
+}
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* ============================================
    RESPONSIVE
    ============================================ */
-@media (max-width: 480px) {
+
+@media (max-width: 1024px) {
+  .playlist-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 100;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+
   .sidebar {
-    width: 260px;
-    padding: 15px;
+    width: 100%;
+    height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid #2a2a2a;
   }
 
-  .controls-bar {
-    padding: 10px 12px;
-    gap: 6px;
-  }
-
-  .controls-bar > span:first-child {
-    font-size: 0.8rem;
-  }
-
-  .video-player {
-    max-height: calc(100vh - 150px);
-  }
-
-  .empty-state {
-    font-size: 1rem;
+  .playlist-panel {
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 50vh;
+    border-left: none;
+    border-top: 1px solid #2a2a2a;
   }
 }
