@@ -46,5 +46,7 @@ backend/videos/*
 
 backend/cache/info/*
 backend/cache/thumbs/*
+backend/cache/storyboard/*
 !backend/cache/info/.gitkeep
 !backend/cache/thumbs/.gitkeep
+!backend/cache/storyboard/.gitkeep
