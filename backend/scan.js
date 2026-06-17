@@ -30,9 +30,23 @@ function getVideoMeta(filePath) {
     ffmpeg.ffprobe(filePath, (err, metadata) => {
       if (err) return reject(err);
 
-      const videoStream = metadata.streams.find(
-        (s) => s.codec_type === "video",
-      );
+      // Danh sách codec ảnh tĩnh thường dùng làm album art
+      const staticImageCodecs = ["mjpeg", "png", "bmp", "gif", "tiff", "webp"];
+
+      // Tìm video stream thực sự (loại bỏ attached_pic và ảnh tĩnh)
+      const videoStream = metadata.streams.find((s) => {
+        if (s.codec_type !== "video") return false;
+
+        // Loại bỏ nếu là attached picture (album art)
+        if (s.disposition && s.disposition.attached_pic === 1) return false;
+
+        // Loại bỏ nếu codec là ảnh tĩnh
+        if (staticImageCodecs.includes(s.codec_name?.toLowerCase()))
+          return false;
+
+        return true;
+      });
+
       resolve({
         width: videoStream ? videoStream.width : null,
         height: videoStream ? videoStream.height : null,
