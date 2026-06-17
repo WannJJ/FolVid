@@ -1,10 +1,11 @@
 import { API_BASE_URL } from "@/config/api";
 import { formatTime } from "@/utils/formatTime";
+import { Film, Music } from "lucide-react";
 import { useRef, useState } from "react";
 import ThumbnailPreview from "./ThumbnailPreview";
 import styles from "./VideoListItem.module.css";
 
-export function VideoThumbnail({ filename, thumb, duration }) {
+export function VideoThumbnail({ filename, thumb, duration, isAudio }) {
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -50,7 +51,7 @@ export function VideoThumbnail({ filename, thumb, duration }) {
           />
         ) : (
           <div className={styles.thumbFallback}>
-            {filename.endsWith(".mp3") ? "🎵" : "🎬"}
+            {isAudio ? <Music /> : <Film />}
           </div>
         )}
       </div>

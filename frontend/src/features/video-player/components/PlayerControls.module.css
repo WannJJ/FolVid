@@ -113,7 +113,7 @@
   opacity: 0.2;
 }
 .loopBtn.active {
-  color: red;
+  color: #60a5fa;
   opacity: 1;
 }
 

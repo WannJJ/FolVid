@@ -11,7 +11,7 @@ export function Timeline() {
   const [hover, setHover] = useState({ active: false, x: 0, time: 0 });
   const { videoRef, progress, setProgress } = usePlayer();
   const { currentVideo } = useVideoStore();
-  const storyboard = useStoryboard(currentVideo.filename);
+  const storyboard = useStoryboard(currentVideo);
 
   // Tua khi click vào thanh timeline
   const handleSeek = (e) => {

@@ -1,19 +1,22 @@
+import { API_BASE_URL } from "@/config/api";
 import { useEffect, useState } from "react";
 
-const API = "http://localhost:4000";
-
-export function useStoryboard(videoName) {
+export function useStoryboard(video) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    if (!videoName) return;
+    if (!video || !video.type || !video.storyboard) {
+      setData(null);
+      return;
+    }
+    const videoName = video.filename;
     const baseName = videoName.replace(/\.[^/.]+$/, "");
 
-    fetch(`${API}/cache/storyboard/${baseName}.storyboard.json`)
+    fetch(`${API_BASE_URL}/cache/storyboard/${baseName}.storyboard.json`)
       .then((r) => r.json())
       .then(setData)
       .catch((err) => console.error("Storyboard load error:", err));
-  }, [videoName]);
+  }, [video]);
 
   return data;
 }
