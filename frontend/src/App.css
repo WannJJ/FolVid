@@ -25,7 +25,7 @@ body,
   background: #000;
 }
 
-.btn-add-playlist {
+.btn-create-playlist {
   padding: 4px 10px;
   background: #3b82f6;
   color: #fff;
@@ -50,27 +50,183 @@ body,
 }
 
 /* ============================================
-   PLAYLIST PANEL
+   PLAYLIST PANEL - DESKTOP
    ============================================ */
 
 .playlist-panel {
   width: 320px;
   min-width: 320px;
-  background: #141414;
-  border-left: 1px solid #2a2a2a;
+  background: #1a1a1a;
+  border-left: 1px solid #333;
   display: flex;
   flex-direction: column;
-  animation: slideIn 0.2s ease;
+  transition:
+    width 0.3s ease,
+    min-width 0.3s ease;
+  position: relative;
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
+.playlist-panel.closed {
+  width: 50px;
+  min-width: 50px;
+}
+
+.playlist-panel.closed .playlist-header {
+  padding: 10px 5px;
+}
+
+.playlist-panel.closed .playlist-title span:not(:first-child),
+.playlist-panel.closed .playlist-count {
+  display: none;
+}
+
+/* Toggle button trong header */
+.btn-toggle-playlist {
+  background: #333;
+  border: none;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-toggle-playlist:hover {
+  background: #444;
+}
+
+/* Floating toggle khi đóng hoàn toàn */
+.playlist-floating-toggle {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+.playlist-floating-toggle:hover {
+  background: #2563eb;
+}
+
+/* ============================================
+   PLAYLIST PANEL - MOBILE (Drawer)
+   ============================================ */
+
+.playlist-panel.mobile {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 85vw;
+  max-width: 400px;
+  z-index: 200;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.playlist-panel.mobile.open {
+  transform: translateX(0);
+}
+
+.playlist-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 199;
+}
+
+/* Mobile toggle button */
+.mobile-playlist-toggle {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: 1px solid #555;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  z-index: 50;
+}
+
+/* ============================================
+   COLLAPSED PLAYLIST ITEM
+   ============================================ */
+
+.playlist-item-collapsed {
+  width: 100%;
+  padding: 8px 0;
+  text-align: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: #888;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.playlist-item-collapsed.playing {
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.playlist-item-collapsed:hover {
+  background: #252525;
+  color: #fff;
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
+
+/* Tablet: ≤1280px */
+@media (max-width: 1280px) {
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+
+  .playlist-panel {
+    width: 280px;
+    min-width: 280px;
+  }
+}
+
+/* Mobile: ≤1024px */
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 150;
+    transform: translateX(-100%);
+  }
+
+  .playlist-panel {
+    width: 85vw;
+    max-width: 400px;
+  }
+}
+
+/* Small mobile: ≤640px */
+@media (max-width: 640px) {
+  .video-element {
+    max-height: 60vh;
+  }
+
+  .playlist-panel.mobile {
+    width: 100vw;
+    max-width: 100vw;
   }
 }
 
@@ -125,7 +281,7 @@ body,
   gap: 8px;
 }
 
-.playlist-controls .ctrl-btn {
+.playlist-controls button {
   padding: 8px 14px;
   background: #2a2a2a;
   color: #e0e0e0;
@@ -136,16 +292,16 @@ body,
   transition: all 0.2s;
 }
 
-.playlist-controls .ctrl-btn:hover:not(:disabled) {
+.playlist-controls button:hover:not(:disabled) {
   background: #3a3a3a;
 }
 
-.playlist-controls .ctrl-btn:disabled {
+.playlist-controls button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.playlist-controls .ctrl-btn.active {
+.playlist-controls button.active {
   background: #10b981;
   color: #fff;
 }

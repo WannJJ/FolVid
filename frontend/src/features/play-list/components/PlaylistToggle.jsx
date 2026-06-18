@@ -2,14 +2,14 @@ import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useVideoStore } from "@/stores/useVideoStore";
 
 export function PlaylistToggle() {
-  const { playlist, createPlaylist } = usePlaylistStore();
-  const { currentVideo } = useVideoStore();
+  const playlist = usePlaylistStore((state) => state.playlist);
+  const createPlaylist = usePlaylistStore((state) => state.createPlaylist);
+  const currentVideo = useVideoStore((state) => state.currentVideo);
 
-  // Đã có playlist → không hiện nút tạo
   if (playlist !== null) return null;
 
   const handleCreatePlaylist = () => {
-    // Tạo playlist từ video đang phát (nếu có) hoặc trống
+    // Tạo playlist từ video object đang phát (nếu có) hoặc trống
     const initial = currentVideo ? [currentVideo] : [];
     createPlaylist(initial);
   };

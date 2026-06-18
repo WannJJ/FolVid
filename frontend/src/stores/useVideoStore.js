@@ -43,8 +43,8 @@ export const useVideoStore = create(
       },
 
       /** Chọn video để phát */
-      setCurrentVideo: (filename) => {
-        set({ currentVideo: filename }, false, "player/setCurrentVideo");
+      setCurrentVideo: (videoObj) => {
+        set({ currentVideo: videoObj }, false, "player/setCurrentVideo");
       },
 
       /** Setter cho pendingRestore */
@@ -58,22 +58,22 @@ export const useVideoStore = create(
        * - Nếu KHÔNG có playlist: phát trực tiếp video đó
        * - Nếu CÓ playlist: thêm video vào playlist rồi phát từ playlist
        */
-      playVideo: (videoName) => {
+      playVideo: (videoObj) => {
         const playlist = usePlaylistStore.getState().playlist;
 
         if (playlist === null) {
           // Không có playlist → phát trực tiếp
-          set({ currentVideo: videoName });
+          set({ currentVideo: videoObj });
         } else {
           // Có playlist → thêm vào playlist rồi phát
           const { addToPlaylist, playAtIndex } = usePlaylistStore.getState();
+          addToPlaylist(videoObj);
 
-          if (!playlist.includes(videoName)) {
-            addToPlaylist(videoName);
-          }
-          // Tìm index và phát
-          const newPlaylist = usePlaylistStore.getState().playlist;
-          const index = newPlaylist.indexOf(videoName);
+          // Lấy playlist sau khi thêm (zustand đã update)
+          const updatedPlaylist = usePlaylistStore.getState().playlist;
+          const index = updatedPlaylist.findIndex(
+            (v) => v.filename === videoObj.filename,
+          );
           if (index !== -1) {
             playAtIndex(index);
           }

@@ -192,7 +192,7 @@ export function PlayerControls() {
 
         {/* Nếu có playlist → hiện controls playlist */}
         {playlist !== null && (
-          <div className="playlist-controls-bar">
+          <div className="playlist-controls">
             <button
               className={isShuffle ? "active" : ""}
               onClick={toggleShuffle}

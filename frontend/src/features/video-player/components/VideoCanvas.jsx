@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/config/api";
+import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useVideoStore } from "@/stores/useVideoStore";
 import { usePlayer } from "../contexts/PlayerContext";
 import styles from "./VideoPlayer.module.css";
@@ -14,6 +15,15 @@ export function VideoCanvas() {
     togglePlay,
   } = usePlayer();
   const { currentVideo } = useVideoStore();
+  const playlist = usePlaylistStore((state) => state.playlist);
+  const playNext = usePlaylistStore((state) => state.playNext);
+
+  const handleEnded = () => {
+    // Chỉ autoplay next nếu đang trong playlist mode
+    if (playlist !== null) {
+      playNext();
+    }
+  };
 
   return (
     <video
@@ -36,6 +46,7 @@ export function VideoCanvas() {
           trigger: Date.now(),
         });
       }}
+      onEnded={handleEnded}
       onTimeUpdate={handleTimeUpdate} // Cập nhật liên tục khi video chạy
       onLoadedMetadata={handleLoadedMeta} // Khi video load xong, lấy duration
       className={styles.videoPlayer}

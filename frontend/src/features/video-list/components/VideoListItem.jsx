@@ -16,11 +16,12 @@ export function VideoListItem({
 }) {
   const [ref, isInView] = useInView();
   const { openContextMenu, setSidebarOpen } = useUIStore();
-  const { currentVideo, setCurrentVideo, fetchVideoList } = useVideoStore();
-  const { playlist, addToPlaylist, isInPlaylist } = usePlaylistStore();
+  const { currentVideo, setCurrentVideo, fetchVideoList, playVideo } =
+    useVideoStore();
+  const { playlist, isInPlaylist } = usePlaylistStore();
   const [showContent, setShowContent] = useState(false);
 
-  const inPlaylist = isInPlaylist(v);
+  const inPlaylist = isInPlaylist(v.filename);
 
   useEffect(() => {
     if (isInView) {
@@ -138,7 +139,10 @@ export function VideoListItem({
               className={`btn-add-playlist ${inPlaylist ? "added" : ""}`}
               onClick={(e) => {
                 e.stopPropagation();
-                if (!inPlaylist) addToPlaylist(v);
+                if (!inPlaylist) {
+                  // addToPlaylist nhận videoObj
+                  usePlaylistStore.getState().addToPlaylist(v);
+                }
               }}
               disabled={inPlaylist}
             >

@@ -1,32 +1,27 @@
+// src/stores/usePlaylistStore.js
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 /**
- * Playlist Store - Quản lý playlist optional
- *
- * Logic:
- * - playlist: null | string[]  (null = chưa tạo playlist, [] = đã tạo nhưng trống)
- * - currentIndex: index video đang phát trong playlist
- * - isRepeat, isShuffle: cấu hình phát
- *
- * Khi playlist === null: feature playlist ẩn hoàn toàn, user click video bất kỳ để phát
- * Khi playlist !== null: feature playlist hiện, video phải nằm trong playlist
+ * Playlist Store - Quản lý playlist optional (chứa VideoObjects)
  */
+
+// Helper: kiểm tra đã có trong playlist chưa
+const isInPlaylistByFilename = (playlist, filename) => {
+  return playlist.some((v) => v.filename === filename);
+};
 
 const usePlaylistStore = create(
   persist(
     (set, get) => ({
       // === STATE ===
-      playlist: null, // null = chưa tạo | string[] = đã tạo
-      currentIndex: -1, // index trong playlist đang phát
+      playlist: null, // null | VideoObject[]
+      currentIndex: -1,
       isRepeat: false,
       isShuffle: false,
 
       // === ACTIONS ===
 
-      /**
-       * Tạo playlist mới (từ trống hoặc từ video hiện tại)
-       */
       createPlaylist: (initialVideos = []) => {
         set({
           playlist: initialVideos,
@@ -34,9 +29,6 @@ const usePlaylistStore = create(
         });
       },
 
-      /**
-       * Xóa playlist hoàn toàn (về null)
-       */
       deletePlaylist: () => {
         set({
           playlist: null,
@@ -46,25 +38,18 @@ const usePlaylistStore = create(
         });
       },
 
-      /**
-       * Thêm video vào playlist (nếu chưa có)
-       */
-      addToPlaylist: (videoName) => {
+      addToPlaylist: (videoObj) => {
         const { playlist } = get();
-        if (playlist === null) return; // Không có playlist thì không thêm được
-        if (playlist.includes(videoName)) return;
+        if (playlist === null) return;
+        if (isInPlaylistByFilename(playlist, videoObj.filename)) return;
 
-        const newPlaylist = [...playlist, videoName];
+        const newPlaylist = [...playlist, videoObj];
         set({
           playlist: newPlaylist,
-          // Nếu playlist trống trước đó, tự động phát video đầu tiên
           currentIndex: playlist.length === 0 ? 0 : get().currentIndex,
         });
       },
 
-      /**
-       * Xóa video khỏi playlist
-       */
       removeFromPlaylist: (index) => {
         const { playlist, currentIndex } = get();
         if (playlist === null) return;
@@ -77,7 +62,6 @@ const usePlaylistStore = create(
         } else if (index < currentIndex) {
           newIndex = currentIndex - 1;
         } else if (index === currentIndex) {
-          // Đang xóa video đang phát
           newIndex =
             currentIndex >= newPlaylist.length
               ? newPlaylist.length - 1
@@ -87,9 +71,6 @@ const usePlaylistStore = create(
         set({ playlist: newPlaylist, currentIndex: newIndex });
       },
 
-      /**
-       * Đổi chỗ 2 video (drag & drop)
-       */
       reorderPlaylist: (fromIndex, toIndex) => {
         const { playlist, currentIndex } = get();
         if (playlist === null) return;
@@ -98,7 +79,6 @@ const usePlaylistStore = create(
         const [removed] = newPlaylist.splice(fromIndex, 1);
         newPlaylist.splice(toIndex, 0, removed);
 
-        // Cập nhật currentIndex nếu bị ảnh hưởng
         let newCurrentIndex = currentIndex;
         if (fromIndex === currentIndex) {
           newCurrentIndex = toIndex;
@@ -111,9 +91,6 @@ const usePlaylistStore = create(
         set({ playlist: newPlaylist, currentIndex: newCurrentIndex });
       },
 
-      /**
-       * Chuyển đến video ở index cụ thể
-       */
       playAtIndex: (index) => {
         const { playlist } = get();
         if (playlist === null) return;
@@ -122,9 +99,6 @@ const usePlaylistStore = create(
         }
       },
 
-      /**
-       * Phát video tiếp theo
-       */
       playNext: () => {
         const { playlist, currentIndex, isShuffle, isRepeat } = get();
         if (playlist === null || playlist.length === 0) return;
@@ -141,12 +115,8 @@ const usePlaylistStore = create(
         } else if (isRepeat) {
           set({ currentIndex: 0 });
         }
-        // Nếu hết playlist và không repeat → dừng (không đổi index)
       },
 
-      /**
-       * Phát video trước đó
-       */
       playPrevious: () => {
         const { currentIndex } = get();
         if (currentIndex > 0) {
@@ -154,23 +124,14 @@ const usePlaylistStore = create(
         }
       },
 
-      /**
-       * Toggle repeat/shuffle
-       */
       toggleRepeat: () => set((state) => ({ isRepeat: !state.isRepeat })),
       toggleShuffle: () => set((state) => ({ isShuffle: !state.isShuffle })),
 
-      /**
-       * Kiểm tra video có trong playlist không
-       */
-      isInPlaylist: (videoName) => {
+      isInPlaylist: (filename) => {
         const { playlist } = get();
-        return playlist !== null && playlist.includes(videoName);
+        return playlist !== null && isInPlaylistByFilename(playlist, filename);
       },
 
-      /**
-       * Lấy video đang phát trong playlist
-       */
       getCurrentVideo: () => {
         const { playlist, currentIndex } = get();
         if (playlist === null || currentIndex < 0) return null;
@@ -178,12 +139,13 @@ const usePlaylistStore = create(
       },
     }),
     {
-      name: "folvid-playlist", // localStorage key
+      name: "folvid-playlist",
       partialize: (state) => ({
-        playlist: state.playlist,
+        // Persist chỉ filename để tránh lưu object quá lớn (thumb, storyboard)
+        // Khi reload, cần re-hydrate từ allVideos
+        playlist: state.playlist ? state.playlist.map((v) => v.filename) : null,
         isRepeat: state.isRepeat,
         isShuffle: state.isShuffle,
-        // KHÔNG lưu currentIndex (reset về 0 khi reload cho đơn giản)
       }),
     },
   ),

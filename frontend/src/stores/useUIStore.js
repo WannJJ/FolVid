@@ -5,6 +5,8 @@ import { create } from "zustand";
 export const useUIStore = create((set, get) => ({
   // ── State ban đầu ──
   sidebarOpen: true,
+  isPlaylistOpen: true,
+  isMobile: false,
 
   contextMenu: {
     visible: false,
@@ -64,6 +66,14 @@ export const useUIStore = create((set, get) => ({
 
   // Drag & Drop
   setDraggingFile: (isDragging) => set({ isDraggingFile: isDragging }),
+
+  // === PLAYLIST PANEL ===
+  togglePlaylist: () =>
+    set((state) => ({ isPlaylistOpen: !state.isPlaylistOpen })),
+  setPlaylistOpen: (open) => set({ isPlaylistOpen: open }),
+
+  // === MOBILE ===
+  setIsMobile: (mobile) => set({ isMobile: mobile }),
 
   // ── Action tiện lợi: reset toàn bộ UI về mặc định ──
   resetUI: () =>
