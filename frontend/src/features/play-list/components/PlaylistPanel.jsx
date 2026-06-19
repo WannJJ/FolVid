@@ -2,8 +2,11 @@
 import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { useVideoStore } from "@/stores/useVideoStore";
+import { formatTime } from "@/utils/formatTime";
+import { Repeat2, Shuffle } from "lucide-react";
 import { useEffect } from "react";
 import { PlaylistItem } from "./PlaylistItem";
+import styles from "./PlaylistPanel.module.css";
 
 export function PlaylistPanel() {
   const {
@@ -45,27 +48,29 @@ export function PlaylistPanel() {
     <>
       {/* Overlay backdrop cho mobile khi playlist mở */}
       {isMobile && isPlaylistOpen && (
-        <div className="playlist-overlay" onClick={togglePlaylist} />
+        <div className={styles.playlistOverlay} onClick={togglePlaylist} />
       )}
       <aside
-        className={`playlist-panel ${isPlaylistOpen ? "open" : "closed"} ${isMobile ? "mobile" : ""}`}
+        className={`${styles.playlistPanel} ${isPlaylistOpen ? styles.open : styles.closed} ${isMobile ? styles.mobile : ""}`}
       >
         {/* Header với nút toggle */}
-        <div className="playlist-header">
-          <div className="playlist-title">
-            <span>📋 Playlist</span>
-            <span className="playlist-count">{playlist.length} video</span>
+        <div className={styles.playlistHeader}>
+          <div className={styles.playlistTitle}>
+            <span title="Playlist">📋 {isPlaylistOpen ? "Playlist" : ""}</span>
+            <span className={styles.playlistCount}>
+              {playlist.length} video
+            </span>
           </div>
-          <div className="playlist-actions">
+          <div className={styles.playlistActions}>
             <button
-              className="btn-toggle-playlist"
+              className={styles.btnTogglePlaylist}
               onClick={togglePlaylist}
               title={isPlaylistOpen ? "Ẩn playlist" : "Hiện playlist"}
             >
               {isPlaylistOpen ? "▶" : "◀"}
             </button>
             <button
-              className="btn-delete-playlist"
+              className={styles.btnDeletePlaylist}
               onClick={deletePlaylist}
               title="Xóa playlist"
             >
@@ -76,42 +81,44 @@ export function PlaylistPanel() {
 
         {/* Controls */}
         {isPlaylistOpen && (
-          <div className="playlist-controls">
+          <div className={styles.playlistControls}>
             <button
-              className={`ctrl-btn ${isShuffle ? "active" : ""}`}
+              className={`${styles.ctrlBtn} ${isShuffle ? styles.active : ""}`}
               onClick={toggleShuffle}
             >
-              🔀
+              <Shuffle />
             </button>
             <button
-              className="ctrl-btn"
+              className={styles.ctrlBtn}
               onClick={playPrevious}
               disabled={currentIndex <= 0}
             >
-              ⏮️
+              ⏮
             </button>
             <button
-              className="ctrl-btn"
+              className={styles.ctrlBtn}
               onClick={playNext}
               disabled={
                 currentIndex >= playlist.length - 1 && !isRepeat && !isShuffle
               }
             >
-              ⏭️
+              ⏭
             </button>
             <button
-              className={`ctrl-btn ${isRepeat ? "active" : ""}`}
+              className={`${styles.ctrlBtn} ${isRepeat ? styles.active : ""}`}
               onClick={toggleRepeat}
             >
-              🔁
+              <Repeat2 />
             </button>
           </div>
         )}
 
         {/* List - vẫn hiện ngay cả khi đóng (thu gọn) */}
-        <div className={`playlist-list ${isPlaylistOpen ? "" : "collapsed"}`}>
+        <div
+          className={`${styles.playlistList} ${isPlaylistOpen ? "" : styles.collapsed}`}
+        >
           {playlist.length === 0 ? (
-            <div className="playlist-empty">
+            <div className={styles.playlistEmpty}>
               Playlist trống.
               <br />
               Chọn video từ thư viện để thêm.
@@ -135,10 +142,10 @@ export function PlaylistPanel() {
         {/* Hiển thị thông tin video đang phát */}
         {/* Now playing info */}
         {isPlaylistOpen && currentVideo && (
-          <div className="now-playing-info">
-            <p className="now-playing-title">{currentVideo.filename}</p>
-            <p className="now-playing-meta">
-              {currentVideo.duration && formatDuration(currentVideo.duration)}
+          <div className={styles.nowPlayingInfo}>
+            <p className={styles.nowPlayingTitle}>{currentVideo.filename}</p>
+            <p className={styles.nowPlayingMeta}>
+              {currentVideo.duration && formatTime(currentVideo.duration)}
               {currentVideo.width &&
                 ` • ${currentVideo.width}x${currentVideo.height}`}
             </p>
@@ -149,7 +156,7 @@ export function PlaylistPanel() {
       {/* Floating toggle button khi playlist đóng (desktop) */}
       {!isMobile && !isPlaylistOpen && (
         <button
-          className="playlist-floating-toggle"
+          className={styles.playlistFloatingToggle}
           onClick={togglePlaylist}
           title="Hiện playlist"
         >
@@ -158,11 +165,4 @@ export function PlaylistPanel() {
       )}
     </>
   );
-}
-
-function formatDuration(seconds) {
-  if (!seconds) return "";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }

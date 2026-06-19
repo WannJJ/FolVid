@@ -1,6 +1,7 @@
 import { useUIStore } from "@/stores/useUIStore";
 import { useEffect } from "react";
 import styles from "./SideBar.module.css";
+
 export function SideBar({ children }) {
   const { sidebarOpen, setSidebarOpen } = useUIStore();
   useEffect(() => {

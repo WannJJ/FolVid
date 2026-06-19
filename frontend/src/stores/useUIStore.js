@@ -2,7 +2,7 @@ import { formatSize } from "@/utils/formatSize";
 import { formatTime } from "@/utils/formatTime";
 import { create } from "zustand";
 
-export const useUIStore = create((set, get) => ({
+export const useUIStore = create((set) => ({
   // ── State ban đầu ──
   sidebarOpen: true,
   isPlaylistOpen: true,
@@ -82,5 +82,6 @@ export const useUIStore = create((set, get) => ({
       contextMenu: { visible: false, x: 0, y: 0, type: null, target: null },
       detailsModal: { open: false, filename: "", details: null },
       isDraggingFile: false,
+      isMobile: false,
     }),
 }));

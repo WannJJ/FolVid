@@ -1,6 +1,14 @@
 import usePlaylistStore from "@/stores/usePlaylistStore";
+import { useUIStore } from "@/stores/useUIStore";
 import { formatTime } from "@/utils/formatTime";
-import { Repeat, Volume2, VolumeX } from "lucide-react";
+import {
+  Repeat1,
+  Repeat2,
+  RepeatOff,
+  Shuffle,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePlayer } from "../contexts/PlayerContext";
 import styles from "./PlayerControls.module.css";
@@ -37,6 +45,7 @@ export function PlayerControls() {
     toggleRepeat,
     toggleShuffle,
   } = usePlaylistStore();
+  const { isMobile, isPlaylistOpen } = useUIStore();
 
   /* Theo dõi trạng thái Fullscreen */
   useEffect(() => {
@@ -157,8 +166,48 @@ export function PlayerControls() {
           aria-label="loop"
           title="Lặp lại"
         >
-          <Repeat />
+          {isLoop ? <Repeat1 /> : <RepeatOff />}
         </button>
+
+        {/* Nếu có playlist → hiện controls playlist */}
+        {!isMobile && playlist !== null && !isPlaylistOpen && (
+          <div className={styles.playlistControls}>
+            <button
+              className={`${styles.controlBtn} ${isShuffle ? styles.active : ""}`}
+              onClick={toggleShuffle}
+              aria-label="shuffle"
+            >
+              <Shuffle />
+            </button>
+            <button
+              className={styles.controlBtn}
+              onClick={playPrevious}
+              disabled={currentIndex <= 0}
+              aria-label="Play Previous"
+            >
+              ⏮
+            </button>
+            <button
+              className={styles.controlBtn}
+              onClick={playNext}
+              disabled={
+                currentIndex >= playlist.length - 1 && !isRepeat && !isShuffle
+              }
+              aria-label="Play Next"
+            >
+              ⏭
+            </button>
+            <button
+              className={`${styles.controlBtn} ${isRepeat ? styles.active : ""}`}
+              onClick={toggleRepeat}
+              aria-label="Repeat"
+            >
+              <Repeat2 />
+            </button>
+          </div>
+        )}
+
+        {/* Fullscreen Button*/}
         <button
           className={`${styles.controlBtn}`}
           onClick={toggleFullscreen}
@@ -189,32 +238,6 @@ export function PlayerControls() {
             </svg>
           )}
         </button>
-
-        {/* Nếu có playlist → hiện controls playlist */}
-        {playlist !== null && (
-          <div className="playlist-controls">
-            <button
-              className={isShuffle ? "active" : ""}
-              onClick={toggleShuffle}
-            >
-              🔀
-            </button>
-            <button onClick={playPrevious} disabled={currentIndex <= 0}>
-              ⏮️ Prev
-            </button>
-            <button
-              onClick={playNext}
-              disabled={
-                currentIndex >= playlist.length - 1 && !isRepeat && !isShuffle
-              }
-            >
-              Next ⏭️
-            </button>
-            <button className={isRepeat ? "active" : ""} onClick={toggleRepeat}>
-              🔁
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

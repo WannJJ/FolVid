@@ -124,6 +124,37 @@ export const useVideoStore = create(
         }
       },
 
+      /** Re-hydrate playlist từ localStorage
+       *  Nhờ Zustand persist đã lưu filename[], cần map lại thành video objects */
+      rehydratePlaylist: () => {
+        const videos = get().videos;
+        if (videos.length === 0) return;
+
+        const stored = localStorage.getItem("folvid-playlist");
+        if (!stored) return;
+
+        try {
+          const parsed = JSON.parse(stored);
+          if (!parsed.state?.playlist || !Array.isArray(parsed.state.playlist))
+            return;
+
+          const hydratedPlaylist = parsed.state.playlist
+            .map((filename) => videos.find((v) => v.filename === filename))
+            .filter(Boolean);
+
+          if (hydratedPlaylist.length > 0) {
+            usePlaylistStore.setState({
+              playlist: hydratedPlaylist,
+              currentIndex: 0,
+              isRepeat: parsed.state.isRepeat ?? false,
+              isShuffle: parsed.state.isShuffle ?? false,
+            });
+          }
+        } catch (e) {
+          console.error("Re-hydrate playlist failed:", e);
+        }
+      },
+
       /** Clear */
       clearCurrentVideo: () => set({ currentVideo: null }),
     }),

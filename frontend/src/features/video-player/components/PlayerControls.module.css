@@ -194,6 +194,41 @@
   cursor: pointer;
 }
 
+/* Playlist controls (inside panel) */
+.playlistControls {
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.playlistControls button {
+  padding: 4px 6px;
+  background: #2a2a2a;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.playlistControls button:hover:not(:disabled) {
+  background: #3a3a3a;
+}
+
+.playlistControls button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.playlistControls button.active {
+  background: #10b981;
+  color: #fff;
+}
+
 @media (max-width: 480px) {
   .controlsBar {
     padding: 10px 12px;

@@ -1,5 +1,6 @@
 import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useVideoStore } from "@/stores/useVideoStore";
+import styles from "./PlaylistPanel.module.css";
 
 export function PlaylistToggle() {
   const playlist = usePlaylistStore((state) => state.playlist);
@@ -15,7 +16,7 @@ export function PlaylistToggle() {
   };
 
   return (
-    <button className="btn-create-playlist" onClick={handleCreatePlaylist}>
+    <button className={styles.btnCreatePlaylist} onClick={handleCreatePlaylist}>
       📋 Tạo Playlist
     </button>
   );

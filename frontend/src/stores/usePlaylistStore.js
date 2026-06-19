@@ -143,6 +143,8 @@ const usePlaylistStore = create(
       partialize: (state) => ({
         // Persist chỉ filename để tránh lưu object quá lớn (thumb, storyboard)
         // Khi reload, cần re-hydrate từ allVideos
+        // Không lưu currentIndex vì rủi ro video not exist
+        //  + trải nghiệm làm mới tự nhiên hơn khi nghe lại playlist
         playlist: state.playlist ? state.playlist.map((v) => v.filename) : null,
         isRepeat: state.isRepeat,
         isShuffle: state.isShuffle,

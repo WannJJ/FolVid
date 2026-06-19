@@ -1,5 +1,9 @@
 // src/features/playlist/PlaylistItem.jsx
+import { API_BASE_URL } from "@/config/api";
+import { formatSize } from "@/utils/formatSize";
+import { formatTime } from "@/utils/formatTime";
 import { useState } from "react";
+import styles from "./PlaylistPanel.module.css";
 
 export function PlaylistItem({
   video,
@@ -37,7 +41,7 @@ export function PlaylistItem({
   if (isCollapsed) {
     return (
       <div
-        className={`playlist-item-collapsed ${isPlaying ? "playing" : ""}`}
+        className={`${styles.playlistItemCollapsed} ${isPlaying ? styles.playing : ""}`}
         onClick={onPlay}
         title={video.filename}
       >
@@ -48,7 +52,7 @@ export function PlaylistItem({
 
   return (
     <div
-      className={`playlist-item ${isPlaying ? "playing" : ""} ${isDragging ? "dragging" : ""}`}
+      className={`${styles.playlistItem} ${isPlaying ? styles.playing : ""} ${isDragging ? styles.dragging : ""}`}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -56,26 +60,33 @@ export function PlaylistItem({
       onDrop={handleDrop}
       onClick={onPlay}
     >
-      <span className="drag-handle">⋮⋮</span>
+      <span className={styles.dragHandle}>⋮⋮</span>
 
-      {video.thumb && (
-        <img src={video.thumb} alt="" className="playlist-thumb" />
+      {/* Thumbnail */}
+      {video.thumb ? (
+        <img
+          src={`${API_BASE_URL}${video.thumb}`}
+          alt=""
+          className={styles.playlistThumb}
+        />
+      ) : (
+        <div className={styles.playlistThumb} />
       )}
 
-      <div className="playlist-item-info">
-        <span className="video-name">
+      <div className={styles.playlistItemInfo}>
+        <span className={styles.videoName}>
           {isPlaying ? "▶ " : `${index + 1}. `}
           {video.filename}
         </span>
-        <span className="video-meta">
-          {video.duration && formatDuration(video.duration)}
+        <span className={styles.videoMeta}>
+          {video.duration && formatTime(video.duration)}
           {video.duration && video.size && " • "}
           {video.size && formatSize(video.size)}
         </span>
       </div>
 
       <button
-        className="btn-remove"
+        className={styles.btnRemove}
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
@@ -85,17 +96,4 @@ export function PlaylistItem({
       </button>
     </div>
   );
-}
-
-function formatDuration(seconds) {
-  if (!seconds) return "";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-function formatSize(bytes) {
-  if (!bytes) return "";
-  const mb = bytes / (1024 * 1024);
-  return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(2)} MB`;
 }
