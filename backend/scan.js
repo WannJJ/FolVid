@@ -246,7 +246,8 @@ function generateStoryboard(videoPath, baseName) {
   // fps=1/10 → 1 frame mỗi 10 giây
   // scale=160:90 → resize thumbnail
   // tile=10xN → xếp grid
-  const filter = `fps=1/${INTERVAL_SECONDS},scale=${THUMB_WIDTH}:${THUMB_HEIGHT},tile=${SPRITE_COLS}x${safeRows}`;
+  // ✅ Mới — contain + pad đen, giữ tỷ lệ gốc
+  const filter = `fps=1/${INTERVAL_SECONDS},scale=${THUMB_WIDTH}:${THUMB_HEIGHT}:force_original_aspect_ratio=decrease,pad=${THUMB_WIDTH}:${THUMB_HEIGHT}:(ow-iw)/2:(oh-ih)/2:1a1a1a,tile=${SPRITE_COLS}x${safeRows}`;
   const ffmpegCmd = `ffmpeg -y -i "${videoPath}" -vf "${filter}" -frames:v 1 -q:v 2 "${outputSprite}"`;
 
   console.log(`[FFMPEG] ${baseName}: ${ffmpegCmd}`);
