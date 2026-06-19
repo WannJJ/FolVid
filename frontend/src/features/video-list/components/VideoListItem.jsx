@@ -1,5 +1,4 @@
 import { videoApi } from "@/services/videoApi";
-import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { useVideoStore } from "@/stores/useVideoStore";
 import { useEffect, useState } from "react";
@@ -18,10 +17,7 @@ export function VideoListItem({
   const { openContextMenu, setSidebarOpen } = useUIStore();
   const { currentVideo, setCurrentVideo, fetchVideoList, playVideo } =
     useVideoStore();
-  const { playlist, isInPlaylist } = usePlaylistStore();
   const [showContent, setShowContent] = useState(false);
-
-  const inPlaylist = isInPlaylist(v.filename);
 
   useEffect(() => {
     if (isInView) {
@@ -35,7 +31,8 @@ export function VideoListItem({
 
   const handleSelectVideo = (v) => {
     if (editingName) return; // handleSelectVideo sẽ không hoạt động nếu đang editing name
-    setCurrentVideo(v);
+    //setCurrentVideo(v);
+    playVideo(v);
     setSidebarOpen(false); // Đóng sidebar sau khi chọn (trên mobile)
   };
 
@@ -95,6 +92,7 @@ export function VideoListItem({
       {showContent ? (
         <>
           <VideoThumbnail
+            v={v}
             filename={v.filename}
             thumb={v.thumb}
             duration={v.duration}
@@ -132,23 +130,6 @@ export function VideoListItem({
               </>
             )}
           </div>
-
-          {/* Chỉ hiện nút Add nếu đã có playlist */}
-          {playlist !== null && (
-            <button
-              className={`btn-add-playlist ${inPlaylist ? "added" : ""}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!inPlaylist) {
-                  // addToPlaylist nhận videoObj
-                  usePlaylistStore.getState().addToPlaylist(v);
-                }
-              }}
-              disabled={inPlaylist}
-            >
-              {inPlaylist ? "✓" : "+"}
-            </button>
-          )}
         </>
       ) : (
         // Skeleton placeholder

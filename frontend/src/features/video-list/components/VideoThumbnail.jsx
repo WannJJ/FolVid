@@ -1,13 +1,16 @@
 import { API_BASE_URL } from "@/config/api";
+import usePlaylistStore from "@/stores/usePlaylistStore";
 import { formatTime } from "@/utils/formatTime";
 import { Film, Music } from "lucide-react";
 import { useRef, useState } from "react";
 import ThumbnailPreview from "./ThumbnailPreview";
 import styles from "./VideoListItem.module.css";
 
-export function VideoThumbnail({ filename, thumb, duration, isAudio }) {
+export function VideoThumbnail({ v, filename, thumb, duration, isAudio }) {
   const videoRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const { playlist, isInPlaylist } = usePlaylistStore();
+  const inPlaylist = isInPlaylist(v.filename);
 
   // Luôn tính URL để video render ngay từ đầu (ref được gán)
   const videoUrl = new URL(
@@ -62,7 +65,27 @@ export function VideoThumbnail({ filename, thumb, duration, isAudio }) {
         videoRef={videoRef}
         videoSrc={videoUrl}
         isHovered={isHovered}
+        isAudio={v.type === "audio"}
       />
+
+      {/* Chỉ hiện nút Add nếu đã có playlist */}
+      {playlist !== null && (
+        <button
+          className={`${styles.btnAddPlaylist} ${inPlaylist ? styles.added : ""}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!inPlaylist) {
+              // addToPlaylist nhận videoObj
+              usePlaylistStore.getState().addToPlaylist(v);
+            }
+          }}
+          disabled={inPlaylist}
+          title="add to playlist"
+          aria-label="add to playlist"
+        >
+          {inPlaylist ? "✓" : "+"}
+        </button>
+      )}
 
       <div className={styles.duration}>{formatTime(duration)}</div>
     </div>

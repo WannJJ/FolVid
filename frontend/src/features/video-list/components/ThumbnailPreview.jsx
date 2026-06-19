@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AudioVisualizer } from "./AudioVisualizer";
 
 function ThumbnailPreview({
   videoRef,
   videoSrc,
   isHovered,
+  isAudio,
   width = 160,
   height = 90,
 }) {
@@ -22,18 +24,16 @@ function ThumbnailPreview({
   const drawFrame = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || !duration) return;
+    if (!video || !canvas) return;
 
     const ctx = canvas.getContext("2d");
 
-    // Tính toán tỷ lệ để vẽ "cover" giống CSS object-fit: cover
-    const videoRatio = video.videoWidth / video.videoHeight;
-    const canvasRatio = width / height;
+    // 1. XÓA HẾT: Xóa canvas về nền đen (padding)
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0, 0, width, height);
 
-    let drawWidth, drawHeight, offsetX, offsetY;
-
-    // Xử lý MP3, audio-only
-    if (video.videoWidth === 0) {
+    // 2. THÊM: Kiểm tra nếu là audio-only (MP3)
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
       // Vẽ waveform giả hoặc icon audio
       ctx.fillStyle = "#1a1a1a";
       ctx.fillRect(0, 0, width, height);
@@ -44,24 +44,31 @@ function ThumbnailPreview({
       return;
     }
 
+    // 3. SỬA: object-fit: contain logic
+    const videoRatio = video.videoWidth / video.videoHeight;
+    const canvasRatio = width / height;
+
+    let drawWidth, drawHeight, offsetX, offsetY;
+
     if (videoRatio > canvasRatio) {
-      // Video rộng hơn canvas → crop 2 bên
-      drawHeight = height;
-      drawWidth = height * videoRatio;
-      offsetX = (width - drawWidth) / 2;
-      offsetY = 0;
-    } else {
-      // Video cao hơn canvas → crop trên dưới
+      // Video RỘNG hơn canvas (tỷ lệ ngang) → giới hạn theo chiều rộng
+      // Có khoảng đen ở TRÊN và DƯỚI
       drawWidth = width;
       drawHeight = width / videoRatio;
       offsetX = 0;
-      offsetY = (height - drawHeight) / 2;
+      offsetY = (height - drawHeight) / 2; // Căn giữa theo chiều cao
+    } else {
+      // Video CAO hơn canvas (tỷ lệ dọc hoặc vuông) → giới hạn theo chiều cao
+      // Có khoảng đen ở TRÁI và PHẢI
+      drawHeight = height;
+      drawWidth = height * videoRatio;
+      offsetX = (width - drawWidth) / 2; // Căn giữa theo chiều rộng
+      offsetY = 0;
     }
 
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, width, height);
+    // 4. GIỮ NGUYÊN: Vẽ hình vào vị trí đã tính
     ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
-  }, [duration, width, height]);
+  }, [width, height]);
 
   const startPreview = useCallback(() => {
     const video = videoRef.current;
@@ -172,17 +179,20 @@ function ThumbnailPreview({
         muted
       />
 
-      {/* Canvas hiển thị preview */}
-      <canvas
-        ref={canvasRef}
-        width={width}
-        height={height}
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "block",
-        }}
-      />
+      {isAudio ? (
+        <AudioVisualizer width={width} height={height} />
+      ) : (
+        <canvas
+          ref={canvasRef}
+          width={width}
+          height={height}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "block",
+          }}
+        />
+      )}
 
       {/* Badge nhỏ hiện "PREVIEW" khi hover */}
       {isHovered && (
