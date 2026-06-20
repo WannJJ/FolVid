@@ -40,7 +40,7 @@ function ThumbnailPreview({
       ctx.fillStyle = "#3b82f6";
       ctx.font = "20px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("🔊 AUDIO", width / 2, height / 2);
+      ctx.fillText("🔊", width / 2, height / 2);
       return;
     }
 

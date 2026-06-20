@@ -1,56 +1,297 @@
-.audioPlaceholder {
+/* ===== Container ===== */
+.container {
   position: absolute;
-  inset: 0; /* top:0; right:0; bottom:0; left:0 */
-  z-index: 5; /* Nằm dưới controls-layer nhưng trên video */
-  background: #111; /* Hoặc gradient */
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  height: 60%;
+  max-height: calc(100vh - 120px);
+  pointer-events: none; /* Click xuyên qua được */
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(
+    145deg,
+    rgba(12, 12, 22, 0.98),
+    rgba(22, 22, 38, 0.95)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+/* ===== Dynamic Background Glow ===== */
+.bgGlow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 340px;
+  height: 340px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.25) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  transition: opacity 0.08s linear;
+  will-change: opacity;
+}
+
+.bgRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 180px;
+  height: 180px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(139, 92, 246, 0.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ===== Vinyl Disc ===== */
+.discArea {
+  position: relative;
+  z-index: 2;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 1.5rem;
-  pointer-events: none;
-  max-height: calc(100vh - 120px);
 }
-.audioVisualizer {
+
+.disc {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #1a1a2e 0%,
+    #16213e 20%,
+    #1a1a2e 40%,
+    #16213e 60%,
+    #1a1a2e 80%,
+    #16213e 100%
+  );
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.05),
+    0 4px 20px rgba(0, 0, 0, 0.6),
+    inset 0 0 20px rgba(0, 0, 0, 0.8);
+  position: relative;
+  animation: spin 5s linear infinite;
+  animation-play-state: paused;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disc[data-playing="true"] {
+  animation-play-state: running;
+}
+
+.discGrooves {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 0 0 4px rgba(255, 255, 255, 0.02),
+    inset 0 0 0 8px rgba(255, 255, 255, 0.02),
+    inset 0 0 0 12px rgba(255, 255, 255, 0.02);
+}
+
+.discCenter {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+  z-index: 1;
+}
+
+.discIcon {
+  color: #fff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.discShine {
   position: absolute;
   inset: 0;
-  z-index: 15;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 60%
+  );
+  animation: shine 5s linear infinite;
+  animation-play-state: paused;
   pointer-events: none;
-  display: flex;
-  align-items: center; /* Căn giữa theo chiều dọc */
-  overflow: hidden;
 }
-.marqueeTrack {
+
+.disc[data-playing="true"] .discShine {
+  animation-play-state: running;
+}
+
+/* ===== Real-time Equalizer ===== */
+.equalizer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  height: 80px;
   width: 100%;
+  max-width: 480px;
+  padding: 0 20px;
+  z-index: 2;
+}
+
+.barTrack {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
   position: relative;
+}
+
+.bar {
+  width: 100%;
+  height: var(--bar-height);
+  min-height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to top,
+    hsl(var(--bar-hue), var(--bar-sat), var(--bar-light)),
+    hsl(var(--bar-hue), 95%, 78%)
+  );
+  box-shadow: var(--bar-glow);
+  /* Transition rất ngắn để mượt 60fps nhưng vẫn có độ "mềm" */
+  transition:
+    height 0.04s linear,
+    box-shadow 0.04s linear;
+  will-change: height, box-shadow;
+}
+
+/* ===== Track Info & Marquee ===== */
+.trackInfo {
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0 24px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: #c084fc;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.marqueeMask {
+  width: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+}
+
+.marqueeTrack {
+  display: flex;
+  white-space: nowrap;
 }
 
 .marqueeText {
   display: inline-block;
-  white-space: nowrap;
-  font-size: 2rem;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  padding-left: 100%;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  animation: marqueeScroll 16s linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
 }
-.marqueeText.active {
-  /* Animation */
-  animation: bounceX 6s ease-in-out infinite;
+
+.marqueeText[data-playing="true"] {
+  animation-play-state: running;
 }
-@keyframes bounceX {
+
+/* ===== Keyframes ===== */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shine {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes marqueeScroll {
   0% {
-    transform: translateX(-10%);
-  }
-  45% {
-    transform: translateX(70%);
-  } /* Điều chỉnh % tùy độ dài chữ */
-  50% {
-    transform: translateX(70%);
-  }
-  95% {
-    transform: translateX(-10%);
+    transform: translateX(0);
   }
   100% {
-    transform: translateX(-10%);
+    transform: translateX(-50%);
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .container {
+    height: 200px;
+    gap: 10px;
+  }
+  .discArea {
+    width: 56px;
+    height: 56px;
+  }
+  .equalizer {
+    height: 60px;
+    padding: 0 12px;
+  }
+  .marqueeText {
+    font-size: 0.85rem;
   }
 }
