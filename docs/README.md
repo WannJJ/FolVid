@@ -19,8 +19,8 @@ docs/
 
 ## 🗂️ Danh sách tài liệu
 
-| File | Chủ đề | Trạng thái | Ghi chú |
-|------|--------|------------|---------|
+| File                               | Chủ đề                                                      | Trạng thái    | Ghi chú                               |
+| ---------------------------------- | ----------------------------------------------------------- | ------------- | ------------------------------------- |
 | `video-seek-preview-strategies.md` | 3 cách làm Hover Thumbnail (Video ẩn / Storyboard / Hybrid) | ✅ Hoàn thành | Đọc khi cần bổ sung tính năng preview |
 
 ---
@@ -30,6 +30,7 @@ docs/
 Khi bạn cần ghi lại một quyết định kỹ thuật quan trọng (chọn thư viện nào, cách xử lý vấn đề gì...), hãy tạo file mới theo mẫu:
 
 ### Đặt tên file
+
 ```
 adr-[số thứ tự]-[tên-vấn-đề-ngắn-gọn].md
 
@@ -45,19 +46,24 @@ adr-003-seek-preview.md
 # Tiêu đề vấn đề
 
 ## Ngữ cảnh
+
 Tại sao cần ra quyết định này? Vấn đề gì đang gặp phải?
 
 ## Các phương án được xem xét
+
 - Phương án A: ...
 - Phương án B: ...
 
 ## Quyết định
+
 Chọn phương án nào? Tại sao?
 
 ## Hệ quả
+
 Chấp nhận đánh đổi gì? Cần làm gì tiếp theo?
 
 ## Code tham khảo / Triển khai
+
 (Link hoặc snippet nếu cần)
 ```
 
@@ -66,11 +72,13 @@ Chấp nhận đánh đổi gì? Cần làm gì tiếp theo?
 ## 🚀 Hướng dẫn sử dụng (cho chính bạn)
 
 ### Khi nào vào đây?
+
 - **Trước khi code tính năng mới:** Kiểm tra xem đã có ADR nào liên quan chưa, tránh viết lại từ đầu.
 - **Khi gặp bug lạ:** Xem lại quyết định cũ có đoán trước case này không.
 - **Sau khi refactor:** Cập nhật ADR cũ hoặc tạo ADR mới giải thích tại sao đổi.
 
 ### Khi nào tạo file mới?
+
 - Giải pháp có từ **2 phương án khả thi** trở lên cần so sánh.
 - Tính năng ảnh hưởng đến **hiệu năng, bảo mật, hoặc trải nghiệm người dùng**.
 - Bạn mất **> 30 phút** nghiên cứu trên Google/StackOverflow để quyết định.
@@ -99,4 +107,4 @@ Chấp nhận đánh đổi gì? Cần làm gì tiếp theo?
 
 ---
 
-*Đây là tài liệu sống (living document). Nó sẽ được cập nhật mỗi khi project phát triển.*
+_Đây là tài liệu sống (living document). Nó sẽ được cập nhật mỗi khi project phát triển._

@@ -28,7 +28,7 @@ export function VideoPlayer() {
     if (!video || !currentVideo) return;
 
     video.addEventListener("loadedmetadata", () => {
-      if (currentVideo.filename.endsWith(".mp3") && !currentVideo.thumb) {
+      if (currentVideo.type === "audio") {
         setIsAudioOnly(true);
       } else {
         setIsAudioOnly(false);

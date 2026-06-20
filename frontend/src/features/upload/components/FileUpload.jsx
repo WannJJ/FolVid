@@ -70,6 +70,7 @@ export function FileUpload() {
         style={{ display: " ne" }}
         id="fileInput"
         onChange={handleFileSelect}
+        className={styles.fileInput}
       />
       <label htmlFor="fileInput" className={styles.dropZoneLabel}>
         {isDraggingFile
