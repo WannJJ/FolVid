@@ -3,13 +3,17 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
-const VIDEO_DIR = path.join(__dirname, "videos");
-const CACHE_DIR = path.join(__dirname, "cache");
-const THUMB_DIR = path.join(CACHE_DIR, "thumbs");
-const INFO_DIR = path.join(CACHE_DIR, "info");
-const STORYBOARD_DIR = path.join(CACHE_DIR, "storyboard");
-
-const VIDEO_EXTS = [".mp3", ".mp4", ".webm", ".ogg", ".mov"];
+const {
+  VIDEO_DIR,
+  CACHE_DIR,
+  THUMB_DIR,
+  INFO_DIR,
+  STORYBOARD_DIR,
+  HLS_DIR,
+  VIDEO_EXTS,
+} = require("./config");
+const { getDuration } = require("./utils/video");
+const { formatTime } = require("./utils/time");
 
 // Cấu hình storyboard
 const THUMB_WIDTH = 160; // Chiều rộng mỗi thumbnail
@@ -18,7 +22,7 @@ const INTERVAL_SECONDS = 10; // Mỗi 10 giây lấy 1 frame
 const SPRITE_COLS = 10; // Số cột trong sprite grid
 
 // Đảm bảo thư mục cache tồn tại
-[THUMB_DIR, INFO_DIR, STORYBOARD_DIR].forEach((dir) => {
+[THUMB_DIR, INFO_DIR, STORYBOARD_DIR, HLS_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -122,115 +126,16 @@ function cleanOrphanCache() {
   return { removed };
 }
 
-// Hàm 5: Quét và xây dựng cache
-async function buildCache() {
-  const videoFiles = fs.readdirSync(VIDEO_DIR).filter((file) => {
-    return VIDEO_EXTS.includes(path.extname(file).toLowerCase());
-  });
-
-  let created = 0;
-  let updated = 0;
-  let skipped = 0;
-  let errors = 0;
-
-  for (const file of videoFiles) {
-    const videoPath = path.join(VIDEO_DIR, file);
-    const infoPath = path.join(INFO_DIR, file + ".json");
-    const thumbPath = path.join(THUMB_DIR, file + ".jpg");
-    const baseName = path.basename(file, path.extname(file));
-
-    const stat = fs.statSync(videoPath);
-    const currentMtime = stat.mtimeMs; // thời gian sửa file (millisecond)
-    const currentSize = stat.size;
-
-    let needsUpdate = true;
-
-    // Kiểm tra xem cache hiện tại còn hợp lệ không
-    if (fs.existsSync(infoPath)) {
-      try {
-        const oldCache = JSON.parse(fs.readFileSync(infoPath, "utf8"));
-        if (oldCache.mtime === currentMtime && oldCache.size === currentSize) {
-          needsUpdate = false;
-        }
-      } catch {
-        needsUpdate = true;
-      }
-    }
-
-    if (!needsUpdate) {
-      skipped++;
-      continue;
-    }
-
-    console.log(`🔍 Đang xử lý: ${file}`);
-
-    try {
-      // Lấy metadata
-      const meta = await getVideoMeta(videoPath);
-
-      // Tạo thumbnail
-      let thumbUrl = null;
-      let sb = null;
-
-      // Chỉ tạo thumbnail nếu file có video stream
-      if (meta.hasVideo) {
-        const thumbPath = path.join(THUMB_DIR, file + ".jpg");
-        await generateThumb(videoPath, thumbPath, meta.duration);
-        thumbUrl = `/cache/thumbs/${file}.jpg`;
-
-        // Tạo storyboard
-        const storyboard = generateStoryboard(videoPath, baseName);
-        sb = {
-          vtt: `/cache/storyboard/${baseName}.storyboard.vtt`,
-          json: `/cache/storyboard/${baseName}.storyboard.json`,
-          sprite: `/cache/storyboard/${baseName}.sprite.jpg`,
-          frames: storyboard.totalFrames,
-        };
-      }
-
-      // Đọc custom metadata
-      const custom = getCustomMeta(videoPath);
-
-      // Gộp lại và lưu cache
-      const cacheData = {
-        filename: file,
-        mtime: currentMtime,
-        size: currentSize,
-        type: meta.hasVideo ? "video" : "audio",
-        width: meta.width,
-        height: meta.height,
-        duration: meta.duration,
-        bitrate: meta.bitrate,
-        thumb: thumbUrl, // sẽ là null nếu là mp3
-        custom,
-        storyboard: sb, // sẽ là null nếu là mp3
-      };
-
-      fs.writeFileSync(infoPath, JSON.stringify(cacheData, null, 2));
-
-      if (fs.existsSync(infoPath) && !needsUpdate) {
-        // Trường hợp này không xảy ra vì đã check ở trên, nhưng để rõ logic
-      } else if (fs.existsSync(infoPath)) {
-        updated++;
-      } else {
-        created++;
-      }
-    } catch (err) {
-      console.error(`❌ Lỗi xử lý ${file}:`, err.message);
-      errors++;
-    }
-  }
-
-  return { created, updated, skipped, errors };
-}
-
 // === TẠO STORYBOARD + VTT
+/*
 function getDuration(videoPath) {
   const cmd = `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "${videoPath}"`;
   const out = execSync(cmd, { encoding: "utf8" }).trim();
   return parseFloat(out);
 }
+*/
 
+// Hàm 5: Tạo Storyboard, VTT và JSON ghi lại các mốc thời gian
 function generateStoryboard(videoPath, baseName) {
   const duration = getDuration(videoPath);
   const totalFrames = Math.ceil(duration / INTERVAL_SECONDS);
@@ -313,12 +218,154 @@ function generateStoryboard(videoPath, baseName) {
   };
 }
 
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  const ms = Math.floor((seconds % 1) * 1000);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
+// Hàm 6: Quét và xây dựng cache
+async function buildCache() {
+  const videoFiles = fs.readdirSync(VIDEO_DIR).filter((file) => {
+    return VIDEO_EXTS.includes(path.extname(file).toLowerCase());
+  });
+
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const file of videoFiles) {
+    const videoPath = path.join(VIDEO_DIR, file);
+    const infoPath = path.join(INFO_DIR, file + ".json");
+    const thumbPath = path.join(THUMB_DIR, file + ".jpg");
+    const baseName = path.basename(file, path.extname(file));
+
+    const stat = fs.statSync(videoPath);
+    const currentMtime = stat.mtimeMs; // thời gian sửa file (millisecond)
+    const currentSize = stat.size;
+
+    let needsUpdate = true;
+
+    // Kiểm tra xem cache hiện tại còn hợp lệ không
+    if (fs.existsSync(infoPath)) {
+      try {
+        const oldCache = JSON.parse(fs.readFileSync(infoPath, "utf8"));
+        if (oldCache.mtime === currentMtime && oldCache.size === currentSize) {
+          needsUpdate = false;
+        }
+      } catch {
+        needsUpdate = true;
+      }
+    }
+
+    if (!needsUpdate) {
+      skipped++;
+      continue;
+    }
+
+    console.log(`🔍 Đang xử lý: ${file}`);
+
+    try {
+      // Lấy metadata
+      const meta = await getVideoMeta(videoPath);
+
+      // Tạo thumbnail
+      let thumbUrl = null;
+      let sb = null;
+
+      // Chỉ tạo thumbnail, storyboard nếu file có video stream
+      if (meta.hasVideo) {
+        const thumbPath = path.join(THUMB_DIR, file + ".jpg");
+        await generateThumb(videoPath, thumbPath, meta.duration);
+        thumbUrl = `/cache/thumbs/${file}.jpg`;
+
+        // Tạo storyboard
+        const storyboard = generateStoryboard(videoPath, baseName);
+        sb = {
+          vtt: `/cache/storyboard/${baseName}.storyboard.vtt`,
+          json: `/cache/storyboard/${baseName}.storyboard.json`,
+          sprite: `/cache/storyboard/${baseName}.sprite.jpg`,
+          frames: storyboard.totalFrames,
+        };
+
+        // Chuyển file video sang HLS
+        await convertToHLS(file);
+      }
+
+      // Đọc custom metadata
+      const custom = getCustomMeta(videoPath);
+
+      // Gộp lại và lưu cache
+      const cacheData = {
+        filename: file,
+        mtime: currentMtime,
+        size: currentSize,
+        type: meta.hasVideo ? "video" : "audio",
+        width: meta.width,
+        height: meta.height,
+        duration: meta.duration,
+        bitrate: meta.bitrate,
+        thumb: thumbUrl, // sẽ là null nếu là mp3
+        custom,
+        storyboard: sb, // sẽ là null nếu là mp3
+        hasHLS: meta.hasVideo,
+      };
+
+      fs.writeFileSync(infoPath, JSON.stringify(cacheData, null, 2));
+
+      if (fs.existsSync(infoPath) && !needsUpdate) {
+        // Trường hợp này không xảy ra vì đã check ở trên, nhưng để rõ logic
+      } else if (fs.existsSync(infoPath)) {
+        updated++;
+      } else {
+        created++;
+      }
+    } catch (err) {
+      console.error(`❌ Lỗi xử lý ${file}:`, err.message);
+      errors++;
+    }
+  }
+
+  return { created, updated, skipped, errors };
+}
+
+/**
+ * Chuyển 1 file video sang HLS
+ * @param {string} filename - Tên file trong thư mục videos/
+ * @returns {Promise<string>} - Đường dẫn tới file .m3u8
+ */
+function convertToHLS(filename) {
+  return new Promise((resolve, reject) => {
+    const inputPath = path.join(VIDEO_DIR, filename);
+    const outputFolder = path.join(HLS_DIR, path.parse(filename).name);
+    const outputPath = path.join(outputFolder, "index.m3u8");
+
+    // Nếu đã convert rồi thì bỏ qua
+    if (fs.existsSync(outputPath)) {
+      console.log(`✅ Đã có HLS cho ${filename}`);
+      return resolve(outputPath);
+    }
+
+    if (!fs.existsSync(outputFolder)) {
+      fs.mkdirSync(outputFolder, { recursive: true });
+    }
+
+    console.log(`🔄 Đang chuyển đổi HLS: ${filename}...`);
+
+    ffmpeg(inputPath)
+      .outputOptions([
+        "-codec: copy", // Copy codec (nhanh, không re-encode)
+        "-start_number 0", // Đoạn đầu tiên là 0
+        "-hls_time 10", // Mỗi đoạn 10 giây
+        "-hls_list_size 0", // Giữ tất cả đoạn trong playlist
+        "-f hls", // Định dạng output là HLS
+      ])
+      .output(outputPath)
+      .on("end", () => {
+        console.log(`✅ Hoàn tất HLS: ${outputPath}`);
+        resolve(outputPath);
+      })
+      .on("error", (err) => {
+        console.error(`❌ Lỗi chuyển đổi ${filename}:`, err.message);
+        reject(err);
+      })
+      .run();
+  });
 }
 
 // Chạy chính

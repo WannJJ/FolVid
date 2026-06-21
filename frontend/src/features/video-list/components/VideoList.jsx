@@ -7,7 +7,7 @@ import styles from "./VideoList.module.css";
 import { VideoListItem } from "./VideoListItem";
 
 export function VideoList() {
-  const { videos } = useVideoStore();
+  const { videos, useHLS, setUseHLS } = useVideoStore();
   const [editingName, setEditingName] = useState(null); // Tên file đang được sửa
   const [tempName, setTempName] = useState(""); // Giá trị tạm trong input
   const [search, setSearch] = useState("");
@@ -59,7 +59,29 @@ export function VideoList() {
   return (
     <>
       <h2>📁 FolVid</h2>
-      <p className={styles.count}>{videos.length} video trong thư mục</p>
+      <p className={styles.count}>
+        {filteredVideos.length} / {videos.length} video trong thư mục
+      </p>
+
+      {/* ===== TOGGLE HLS VỚI CSS MODULE ===== */}
+      <div className={styles.toggleWrapper}>
+        <label className={styles.toggleLabel}>
+          <input
+            type="checkbox"
+            checked={useHLS}
+            onChange={(e) => setUseHLS(e.target.checked)}
+          />
+          <span>
+            {useHLS ? "🔴 Đang dùng HLS Streaming" : "⭕ Phát file trực tiếp"}
+          </span>
+        </label>
+
+        <div className={styles.tooltip}>
+          {useHLS
+            ? "Video được cắt thành đoạn nhỏ (10s). Trình duyệt chỉ tải đoạn đang xem, tua nhanh, tiết kiệm băng thông. Nên dùng cho video dài."
+            : "Tải toàn bộ file video về trình duyệt. Phù hợp video ngắn (< 2 phút) vì khởi động nhanh, không cần xử lý đoạn nhỏ."}
+        </div>
+      </div>
 
       <SearchBar search={search} setSearch={setSearch} />
 
@@ -71,9 +93,6 @@ export function VideoList() {
       />
 
       {/* ===== DANH SÁCH VIDEO ===== */}
-      <p style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "12px" }}>
-        {filteredVideos.length} / {videos.length} video
-      </p>
       <ul className={styles.videoList}>
         {filteredVideos.map((v) => (
           <VideoListItem

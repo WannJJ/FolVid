@@ -6,12 +6,15 @@ const multer = require("multer"); // middleware để express nhận file từ f
 
 const app = express();
 const PORT = 4000;
-const VIDEO_DIR = path.join(__dirname, "videos");
-const CACHE_DIR = path.join(__dirname, "cache");
-const INFO_DIR = path.join(CACHE_DIR, "info");
-const THUMB_DIR = path.join(CACHE_DIR, "thumbs");
-const STORYBOARD_DIR = path.join(CACHE_DIR, "storyboard");
-const videoExts = [".mp4", ".mp3", ".webm", ".ogg", ".mov"];
+const {
+  VIDEO_DIR,
+  CACHE_DIR,
+  THUMB_DIR,
+  INFO_DIR,
+  STORYBOARD_DIR,
+  HLS_DIR,
+  VIDEO_EXTS,
+} = require("./config");
 
 //const app = require('./app');
 //app.listen(PORT, () => console.log(`Backend chạy tại http://localhost:${PORT}`));
@@ -46,6 +49,20 @@ app.use(cors());
 
 // Phục vụ file video tĩnh qua URL: http://localhost:4000/videos/ten-file.mp4
 app.use("/videos", express.static(VIDEO_DIR));
+
+// Phục vụ file HLS (quan trọng: phải set đúng MIME type)
+app.use(
+  "/hls",
+  express.static(HLS_DIR, {
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith(".m3u8")) {
+        res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
+      } else if (filepath.endsWith(".ts")) {
+        res.setHeader("Content-Type", "video/mp2t");
+      }
+    },
+  }),
+);
 
 // Phục vụ ảnh thumbnail tĩnh
 app.use("/cache/thumbs", express.static(THUMB_DIR));
@@ -100,6 +117,18 @@ app.get("/api/videos", (req, res) => {
   res.json(videos);
 });
 
+// API trả về danh sách video có HLS sẵn
+app.get("/api/videos/hls", (req, res) => {
+  fs.readdir(HLS_DIR, (err, folders) => {
+    if (err) return res.status(500).json({ error: "Lỗi đọc thư mục HLS" });
+    // Chỉ trả về các thư mục có file index.m3u8
+    const hlsVideos = folders.filter((folder) => {
+      return fs.existsSync(path.join(HLS_DIR, folder, "index.m3u8"));
+    });
+    res.json(hlsVideos);
+  });
+});
+
 // Nhận file
 app.post("/api/upload", (req, res, next) => {
   upload.single("video")(req, res, (err) => {
@@ -150,6 +179,7 @@ app.put("/api/videos/:filename", express.json(), (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`✅ Backend chạy tại http://localhost:${PORT}`);
-  console.log(`📁 Video: ${VIDEO_DIR}`);
+  console.log(`📁 Video gốc: ${VIDEO_DIR}`);
+  console.log(`📁 HLS output: ${HLS_DIR}`);
   console.log(`💡 Nhớ chạy "node scan.js" nếu vừa thêm/xóa/sửa video`);
 });

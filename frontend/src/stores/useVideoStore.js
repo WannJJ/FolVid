@@ -14,6 +14,7 @@ export const useVideoStore = create(
       currentVideo: null, // string | null — tên file đang phát
       pendingRestore: null, // Object {playbackRate, volume, loop} | null - state đọc từ localStorage
       isLoading: false, // boolean — đang fetch danh sách
+      useHLS: true, //boolean - hỗ trợ play video bằng hls
       error: null, // string | null — lỗi nếu có
 
       /* =========================================
@@ -50,6 +51,11 @@ export const useVideoStore = create(
       /** Setter cho pendingRestore */
       setPendingRestore: (state) => {
         set({ pendingRestore: state }, false, "player/setPendingRestore");
+      },
+
+      /** Setter cho useHLS */
+      setUseHLS: (useHLS = true) => {
+        set({ useHLS: useHLS }, false, "player/setUseHLS");
       },
 
       /**

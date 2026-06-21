@@ -19,3 +19,66 @@
   outline: none;
   box-sizing: border-box;
 }
+
+/* ===== HSL TOGGLE WRAPPER ===== */
+.toggleWrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #fff;
+  user-select: none;
+}
+
+/* ===== TOOLTIP ===== */
+.tooltip {
+  position: absolute;
+  top: 125%;
+  left: 10px;
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  max-width: 260px;
+  white-space: normal;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+
+  /* Ẩn mặc định + chuẩn bị cho fade */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease,
+    transform 0.25s ease;
+}
+
+/* Mũi tên chỉ LÊN */
+.tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 24px;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #2d2d2d transparent;
+}
+
+/* ===== HOVER STATE ===== */
+.toggleWrapper:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}

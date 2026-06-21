@@ -1,6 +1,8 @@
 import { API_BASE_URL } from "@/config/api";
 import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useVideoStore } from "@/stores/useVideoStore";
+import Hls from "hls.js";
+import { useEffect } from "react";
 import { usePlayer } from "../contexts/PlayerContext";
 import styles from "./VideoPlayer.module.css";
 
@@ -14,9 +16,71 @@ export function VideoCanvas() {
     saveState,
     togglePlay,
   } = usePlayer();
-  const { currentVideo } = useVideoStore();
+  const { currentVideo, useHLS } = useVideoStore();
   const playlist = usePlaylistStore((state) => state.playlist);
   const playNext = usePlaylistStore((state) => state.playNext);
+
+  // Xử lý HLS khi đổi video
+  // ========== LOGIC CHỌN SOURCE: TÍNH 1 LẦN, GÁN 1 LẦN ==========
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !currentVideo) return;
+
+    let hls = null;
+
+    // Tính toán URL duy nhất 1 lần
+    const encodedName = encodeURIComponent(currentVideo.filename);
+    const normalUrl = `${API_BASE_URL}/videos/${encodedName}`;
+
+    // QUYẾT ĐỊNH: Có dùng HLS không?
+    const shouldUseHLS =
+      currentVideo.type === "video" && // Chỉ video mới xét HLS
+      currentVideo.hasHLS === true; // Backend xác nhận đã có HLS
+
+    if (useHLS && shouldUseHLS) {
+      const baseName = currentVideo.filename.replace(/\.[^/.]+$/, "");
+      const hlsUrl = `${API_BASE_URL}/hls/${encodeURIComponent(baseName)}/index.m3u8`;
+
+      if (Hls.isSupported()) {
+        hls = new Hls({
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60,
+        });
+        hls.loadSource(hlsUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {});
+        });
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            console.error("HLS lỗi, fallback về file gốc:", data);
+            hls.destroy();
+            hls = null;
+            video.src = normalUrl; // Fallback khi HLS lỗi
+          }
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        // Safari native HLS
+        video.src = hlsUrl;
+      } else {
+        // Trình duyệt không hỗ trợ HLS
+        video.src = normalUrl;
+      }
+    } else {
+      // Audio hoặc video chưa có HLS: dùng file gốc
+      video.src = normalUrl;
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      } else {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      }
+    };
+  }, [currentVideo, useHLS]);
 
   const handleEnded = () => {
     // Chỉ autoplay next nếu đang trong playlist mode
@@ -28,7 +92,7 @@ export function VideoCanvas() {
   return (
     <video
       ref={videoRef}
-      src={`${API_BASE_URL}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
+      //src={`${API_BASE_URL}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
       autoPlay
       onClick={togglePlay} // Toggle play/pause
       onPlay={() => {
