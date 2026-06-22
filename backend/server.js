@@ -33,7 +33,7 @@ const upload = multer({
   storage: storage, // storage bạn đã cấu hình trước đó
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    if (videoExts.includes(ext)) {
+    if (VIDEO_EXTS.includes(ext)) {
       cb(null, true); // Chấp nhận
     } else {
       cb(new Error("Định dạng file không được hỗ trợ: " + ext), false); // Từ chối
@@ -46,6 +46,8 @@ const upload = multer({
 
 // Cho phép frontend (chạy ở port khác) gọi API đến backend
 app.use(cors());
+
+app.use(express.json()); // <-- SỬA LỖI "req.body undefined"
 
 // Phục vụ file video tĩnh qua URL: http://localhost:4000/videos/ten-file.mp4
 app.use("/videos", express.static(VIDEO_DIR));
@@ -78,7 +80,7 @@ app.get("/api/videos", (req, res) => {
 
   // Đọc trực tiếp thư mục videos để biết chính xác file nào đang tồn tại
   const files = fs.readdirSync(VIDEO_DIR).filter((file) => {
-    return videoExts.includes(path.extname(file).toLowerCase());
+    return VIDEO_EXTS.includes(path.extname(file).toLowerCase());
   });
 
   const videos = files.map((file) => {
@@ -146,6 +148,38 @@ app.post("/api/upload", (req, res, next) => {
     }
 
     res.json({ message: "Upload thành công", filename: req.file.filename });
+  });
+});
+
+// Helper: lấy đường dẫn file .meta.json tương ứng với video
+const getMetaPath = (videoFilename) => {
+  const baseName = path.parse(videoFilename).name;
+  return path.join(VIDEO_DIR, `${videoFilename}.meta.json`);
+};
+
+// Save metadata
+app.post("/api/metadata", (req, res) => {
+  const { filename, artist, author, genre, uploadedAt } = req.body;
+
+  if (!filename) {
+    return res.status(400).json({ error: "Filename required" });
+  }
+
+  const metadata = {
+    filename,
+    artist: artist || null,
+    author: author || null,
+    genre: genre || null,
+    uploadedAt: uploadedAt || new Date().toISOString(),
+  };
+
+  const metaPath = getMetaPath(filename);
+
+  fs.writeFile(metaPath, JSON.stringify(metadata, null, 2), (err) => {
+    if (err) {
+      return res.status(500).json({ error: "Lỗi lưu metadata" });
+    }
+    res.json({ success: true, metadata });
   });
 });
 

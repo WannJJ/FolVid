@@ -127,14 +127,6 @@ function cleanOrphanCache() {
 }
 
 // === TẠO STORYBOARD + VTT
-/*
-function getDuration(videoPath) {
-  const cmd = `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "${videoPath}"`;
-  const out = execSync(cmd, { encoding: "utf8" }).trim();
-  return parseFloat(out);
-}
-*/
-
 // Hàm 5: Tạo Storyboard, VTT và JSON ghi lại các mốc thời gian
 function generateStoryboard(videoPath, baseName) {
   const duration = getDuration(videoPath);

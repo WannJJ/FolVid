@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/config/api";
+import { videoApi } from "@/services/videoApi";
 import usePlaylistStore from "@/stores/usePlaylistStore";
 import { formatTime } from "@/utils/formatTime";
 import { Film, Music } from "lucide-react";
@@ -11,12 +11,6 @@ export function VideoThumbnail({ v, filename, thumb, duration, isAudio }) {
   const [isHovered, setIsHovered] = useState(false);
   const { playlist, isInPlaylist } = usePlaylistStore();
   const inPlaylist = isInPlaylist(v.filename);
-
-  // Luôn tính URL để video render ngay từ đầu (ref được gán)
-  const videoUrl = new URL(
-    `/videos/${encodeURIComponent(filename)}`,
-    API_BASE_URL,
-  ).href;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -48,7 +42,7 @@ export function VideoThumbnail({ v, filename, thumb, duration, isAudio }) {
         {thumb ? (
           <img
             className={styles.thumbImage}
-            src={`${API_BASE_URL}${thumb}`}
+            src={videoApi.getThumbnailSrc(thumb)}
             alt={filename}
             loading="lazy"
           />
@@ -63,9 +57,9 @@ export function VideoThumbnail({ v, filename, thumb, duration, isAudio }) {
       {/* Luôn render (để ref được gán), nhưng ẩn bằng opacity */}
       <ThumbnailPreview
         videoRef={videoRef}
-        videoSrc={videoUrl}
+        videoSrc={videoApi.getVideoSrc(filename)}
         isHovered={isHovered}
-        isAudio={v.type === "audio"}
+        isAudio={isAudio}
       />
 
       {/* Chỉ hiện nút Add nếu đã có playlist */}

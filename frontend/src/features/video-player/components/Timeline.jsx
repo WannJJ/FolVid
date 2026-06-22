@@ -1,5 +1,5 @@
-import { API_BASE_URL } from "@/config/api";
 import { useStoryboard } from "@/hooks/useStoryboard";
+import { videoApi } from "@/services/videoApi";
 import { useVideoStore } from "@/stores/useVideoStore";
 import { formatTime } from "@/utils/formatTime";
 import { useRef, useState } from "react";
@@ -100,7 +100,7 @@ export function Timeline() {
             }}
           >
             <img
-              src={`${API_BASE_URL}${frame.sprite}`}
+              src={videoApi.getStoryboardSpriteSrc(frame.sprite)}
               alt="preview"
               loading="lazy"
               style={{

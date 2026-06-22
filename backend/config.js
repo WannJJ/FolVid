@@ -10,7 +10,17 @@ const INFO_DIR = path.join(CACHE_DIR, "info");
 const STORYBOARD_DIR = path.join(CACHE_DIR, "storyboard");
 const HLS_DIR = path.join(BASE_DIR, "hls");
 
-const VIDEO_EXTS = [".mp3", ".mp4", ".webm", ".ogg", ".mov"];
+const VIDEO_EXTS = [
+  ".mp4",
+  ".webm",
+  ".ogg",
+  ".mov",
+  ".mp3",
+  ".wav",
+  ".aac",
+  ".flac",
+  ".m4a",
+];
 
 module.exports = {
   BASE_DIR,

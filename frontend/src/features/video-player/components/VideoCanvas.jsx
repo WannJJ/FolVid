@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/config/api";
+import { videoApi } from "@/services/videoApi";
 import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useVideoStore } from "@/stores/useVideoStore";
 import Hls from "hls.js";
@@ -29,8 +29,7 @@ export function VideoCanvas() {
     let hls = null;
 
     // Tính toán URL duy nhất 1 lần
-    const encodedName = encodeURIComponent(currentVideo.filename);
-    const normalUrl = `${API_BASE_URL}/videos/${encodedName}`;
+    const normalUrl = videoApi.getVideoSrc(currentVideo.filename);
 
     // QUYẾT ĐỊNH: Có dùng HLS không?
     const shouldUseHLS =
@@ -38,8 +37,7 @@ export function VideoCanvas() {
       currentVideo.hasHLS === true; // Backend xác nhận đã có HLS
 
     if (useHLS && shouldUseHLS) {
-      const baseName = currentVideo.filename.replace(/\.[^/.]+$/, "");
-      const hlsUrl = `${API_BASE_URL}/hls/${encodeURIComponent(baseName)}/index.m3u8`;
+      const hlsUrl = videoApi.getHlsSrc(currentVideo.filename);
 
       if (Hls.isSupported()) {
         hls = new Hls({
@@ -92,7 +90,6 @@ export function VideoCanvas() {
   return (
     <video
       ref={videoRef}
-      //src={`${API_BASE_URL}/videos/${encodeURIComponent(currentVideo.filename)}`} // encodeURI: phòng khi file có dấu cách/ký tự đặc biệt
       autoPlay
       onClick={togglePlay} // Toggle play/pause
       onPlay={() => {

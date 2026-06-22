@@ -1,21 +1,24 @@
-import { API_BASE_URL } from "@/config/api";
+import { videoApi } from "@/services/videoApi";
 import { useEffect, useState } from "react";
 
 export function useStoryboard(video) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    if (!video || !video.type || !video.storyboard) {
-      setData(null);
-      return;
-    }
-    const videoName = video.filename;
-    const baseName = videoName.replace(/\.[^/.]+$/, "");
+    const fetchStoryboard = async () => {
+      if (!video || !video.type || !video.storyboard) {
+        setData(null);
+        return;
+      }
 
-    fetch(`${API_BASE_URL}/cache/storyboard/${baseName}.storyboard.json`)
-      .then((r) => r.json())
-      .then(setData)
-      .catch((err) => console.error("Storyboard load error:", err));
+      try {
+        const sbData = await videoApi.getStorboardData(video.filename);
+        setData(sbData);
+      } catch (err) {
+        console.error("Storyboard load error:", err);
+      }
+    };
+    fetchStoryboard();
   }, [video]);
 
   return data;

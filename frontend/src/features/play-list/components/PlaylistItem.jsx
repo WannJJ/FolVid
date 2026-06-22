@@ -1,5 +1,5 @@
 // src/features/playlist/PlaylistItem.jsx
-import { API_BASE_URL } from "@/config/api";
+import { videoApi } from "@/services/videoApi";
 import { formatSize } from "@/utils/formatSize";
 import { formatTime } from "@/utils/formatTime";
 import { useState } from "react";
@@ -65,7 +65,7 @@ export function PlaylistItem({
       {/* Thumbnail */}
       {video.thumb ? (
         <img
-          src={`${API_BASE_URL}${video.thumb}`}
+          src={videoApi.getThumbnailSrc(video.thumb)}
           alt=""
           className={styles.playlistThumb}
         />
