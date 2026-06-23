@@ -5,6 +5,7 @@ import { create } from "zustand";
 export const useUIStore = create((set) => ({
   // ── State ban đầu ──
   sidebarOpen: true,
+  showUploadModal: false,
   isPlaylistOpen: true,
   isMobile: false,
 
@@ -29,6 +30,9 @@ export const useUIStore = create((set) => ({
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+
+  // File Upload Modal
+  setShowUploadModal: (open) => set({ showUploadModal: open }),
 
   // Context Menu
   openContextMenu: ({ x, y, type, target }) =>

@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "@/config/api";
+import { videoApi } from "@/services/videoApi";
 import { useVideoStore } from "@/stores/useVideoStore";
 import { useState } from "react";
 import styles from "./FileUpload.module.css";
@@ -31,23 +31,13 @@ export function FileUpload() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("video", file); // 'video' phải khớp với upload.single('video')
-
     try {
-      const res = await fetch(`${API_BASE_URL}/api/upload`, {
-        method: "POST",
-        body: formData, // Không set Content-Type, browser tự set kèm boundary
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("Upload thành công: " + data.filename);
+      const data = await videoApi.upload(file);
+      alert("Upload thành công: " + data.filename);
 
-        await fetchVideoList();
-      } else {
-        alert("Lỗi: " + data.error);
-      }
+      await fetchVideoList();
     } catch (err) {
+      alert("Lỗi! Upload thất bại");
       console.error(err);
     }
   };
