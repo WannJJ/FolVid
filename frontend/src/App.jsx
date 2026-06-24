@@ -3,7 +3,7 @@ import { AppLayout } from "././components/layout";
 import "./App.css";
 import ResponsiveHandler from "./components/responsive-handler/ResponsiveHandler";
 import { MobilePlaylistToggle, PlaylistToggle } from "./features/play-list";
-import { FileUpload, UploadModal, UploadModalButton } from "./features/upload";
+import { UploadModal, UploadModalButton } from "./features/upload";
 import { VideoList } from "./features/video-list/";
 import { VideoPlayer } from "./features/video-player";
 import { PlayerProvider } from "./features/video-player/contexts/PlayerContext";
@@ -28,7 +28,7 @@ function App() {
       <AppLayout
         sidebarContent={
           <>
-            <VideoList /> <FileUpload /> <PlaylistToggle />{" "}
+            <VideoList /> <PlaylistToggle />
             <UploadModalButton />
           </>
         }
