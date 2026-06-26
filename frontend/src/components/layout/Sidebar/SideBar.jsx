@@ -4,10 +4,10 @@ import styles from "./SideBar.module.css";
 
 export function SideBar({ children }) {
   const { sidebarOpen, setSidebarOpen } = useUIStore();
+
   useEffect(() => {
     const handler = (e) => {
       // Chỉ prevent nếu click vào vùng của sidebar
-      //if (e.target.closest(".sidebar")) {
       if (e.target.closest(`.${styles.sidebar}`)) {
         e.preventDefault();
       }
