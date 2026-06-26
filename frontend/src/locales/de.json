@@ -1,0 +1,52 @@
+{
+  "app": {
+    "title": "FolVid",
+    "videoCount": "{{count}} Videos im Ordner",
+    "nowPlaying": "Wird abgespielt:",
+    "selectVideo": "👈 Wählen Sie ein Video aus der Liste links",
+    "speed": "Geschwindigkeit:"
+  },
+  "videoList": {
+    "header": "📁 FolVid",
+    "createPlaylist": "Playlist erstellen",
+    "uploadVideo": "📤 Video hochladen",
+    "hlsEnabled": "🔴 HLS-Streaming aktiv",
+    "hlsDisabled": "⭕ Direkte Dateiwiedergabe",
+    "hlsEnabledTooltip": "Video wird in kleine Segmente (10 s) unterteilt. Der Browser lädt nur das aktuell angezeigte Segment, ermöglicht schnelles Spulen und spart Bandbreite. Empfohlen für lange Videos.",
+    "hlsDisabledTooltip": "Die gesamte Videodatei wird in den Browser geladen. Geeignet für kurze Videos (< 2 Min.), da der Start schnell ist und keine Segmentverarbeitung nötig ist.",
+    "searchPlaceholder": "🔍 Nach Name, Künstler suchen..."
+  },
+  "filter": {
+    "title": "⚙️ Erweiterte Filter",
+    "genre": "Genre",
+    "artist": "Künstler",
+    "minDuration": "Min (Min.)",
+    "maxDuration": "Max (Min.)",
+    "resolution": "Auflösung",
+    "clearFilters": "Filter zurücksetzen",
+    "all": "- Alle -"
+  },
+  "upload": {
+    "dropHint": "Datei hier ablegen...",
+    "dragDropLabel": "Video per Drag & Drop hierher ziehen",
+    "chooseFile": "📂 Datei vom Computer auswählen",
+    "or": "oder",
+    "supportedFormats": "Unterstützt: MP3, MP4, WebM, OGG, MOV",
+    "invalidFileError": "Bitte wählen Sie eine gültige Videodatei aus!",
+    "metadataTitle": "📝 Zusätzliche Informationen (optional)",
+    "artist": "Künstler / Sänger",
+    "artistPlaceholder": "Künstlernamen eingeben...",
+    "creator": "Autor / Ersteller",
+    "creatorPlaceholder": "Namen des Autors eingeben...",
+    "genre": "Genre",
+    "genrePlaceholder": "Genre eingeben",
+    "cancel": "Abbrechen",
+    "uploading": "⏳ Wird hochgeladen...",
+    "upload": "🚀 Video hochladen"
+  },
+  "playlist": {
+    "hidePlaylist": "Playlist ausblenden",
+    "showPlaylist": "Playlist anzeigen",
+    "removePlaylist": "Playlist entfernen"
+  }
+}

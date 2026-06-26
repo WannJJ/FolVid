@@ -1,8 +1,10 @@
 import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useVideoStore } from "@/stores/useVideoStore";
+import { useTranslation } from "react-i18next";
 import styles from "./PlaylistPanel.module.css";
 
 export function PlaylistToggle() {
+  const { t } = useTranslation();
   const playlist = usePlaylistStore((state) => state.playlist);
   const createPlaylist = usePlaylistStore((state) => state.createPlaylist);
   const currentVideo = useVideoStore((state) => state.currentVideo);
@@ -17,7 +19,7 @@ export function PlaylistToggle() {
 
   return (
     <button className={styles.btnCreatePlaylist} onClick={handleCreatePlaylist}>
-      📋 Tạo Playlist
+      📋 {t("videoList.createPlaylist")}
     </button>
   );
 }

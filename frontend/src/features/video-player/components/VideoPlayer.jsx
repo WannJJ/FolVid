@@ -2,6 +2,7 @@ import { VideoPlayerContextMenu } from "@/features/video-actions";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useVideoStore } from "@/stores/useVideoStore";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { usePlayer } from "../contexts/PlayerContext";
 import { useAutoHideControls } from "../hooks/useAutoHideControls";
 import { usePlayerContextMenu } from "../hooks/usePlayerContextMenu";
@@ -12,6 +13,7 @@ import { VideoCanvas } from "./VideoCanvas";
 import styles from "./VideoPlayer.module.css";
 
 export function VideoPlayer() {
+  const { t } = useTranslation();
   const [isAudioOnly, setIsAudioOnly] = useState(false);
   const { videoRef, wrapperRef, setShowControls } = usePlayer();
   const { currentVideo } = useVideoStore();
@@ -64,7 +66,7 @@ export function VideoPlayer() {
         </>
       ) : (
         <div className={styles.emptyState}>
-          <p>👈 Chọn một video từ danh sách bên trái</p>
+          <p> {t("app.selectVideo")}</p>
         </div>
       )}
 

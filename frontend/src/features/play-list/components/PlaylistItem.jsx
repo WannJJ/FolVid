@@ -2,6 +2,7 @@
 import { videoApi } from "@/services/videoApi";
 import { formatSize } from "@/utils/formatSize";
 import { formatTime } from "@/utils/formatTime";
+import { Music } from "lucide-react";
 import { useState } from "react";
 import styles from "./PlaylistPanel.module.css";
 
@@ -70,7 +71,9 @@ export function PlaylistItem({
           className={styles.playlistThumb}
         />
       ) : (
-        <div className={styles.playlistThumb} />
+        <div className={styles.playlistThumb}>
+          <Music />
+        </div>
       )}
 
       <div className={styles.playlistItemInfo}>

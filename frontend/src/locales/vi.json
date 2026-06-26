@@ -1,0 +1,52 @@
+{
+  "app": {
+    "title": "FolVid",
+    "videoCount": "{{count}} video trong thư mục",
+    "nowPlaying": "Đang phát:",
+    "selectVideo": "👈 Chọn một video từ danh sách bên trái",
+    "speed": "Tốc độ:"
+  },
+  "videoList": {
+    "header": "📁 FolVid",
+    "createPlaylist": "Tạo Playlist",
+    "uploadVideo": "📤 Upload Video",
+    "hlsEnabled": "🔴 Đang dùng HLS Streaming",
+    "hlsDisabled": "⭕ Phát file trực tiếp",
+    "hlsEnabledTooltip": "Video được cắt thành đoạn nhỏ (10s). Trình duyệt chỉ tải đoạn đang xem, tua nhanh, tiết kiệm băng thông. Nên dùng cho video dài.",
+    "hlsDisabledTooltip": "Tải toàn bộ file video về trình duyệt. Phù hợp video ngắn (< 2 phút) vì khởi động nhanh, không cần xử lý đoạn nhỏ.",
+    "searchPlaceholder": "🔍 Tìm theo tên, nghệ sĩ..."
+  },
+  "filter": {
+    "title": "⚙️ Bộ lọc nâng cao",
+    "genre": "Thể loại",
+    "artist": "Nghệ sĩ",
+    "minDuration": "Min (phút)",
+    "maxDuration": "Max (phút)",
+    "resolution": "Độ phân giải",
+    "clearFilters": "Xóa bộ lọc",
+    "all": "- Tất cả -"
+  },
+  "upload": {
+    "dropHint": "Thả file vào đây...",
+    "dragDropLabel": "Kéo & thả video vào đây",
+    "chooseFile": "📂 Chọn file từ máy",
+    "or": "hoặc",
+    "supportedFormats": "Hỗ trợ: MP3, MP4, WebM, OGG, MOV",
+    "invalidFileError": "Vui lòng chọn file video hợp lệ!",
+    "metadataTitle": "📝 Thông tin bổ sung (tùy chọn)",
+    "artist": "Nghệ sĩ / Ca sĩ",
+    "artistPlaceholder": "Nhập tên nghệ sĩ...",
+    "creator": "Tác giả / Creator",
+    "creatorPlaceholder": "Nhập tên tác giả...",
+    "genre": "Thể loại",
+    "genrePlaceholder": "Nhập thể loại",
+    "cancel": "Hủy",
+    "uploading": "⏳ Uploading...",
+    "upload": "🚀 Upload Video"
+  },
+  "playlist": {
+    "hidePlaylist": "Ẩn playlist",
+    "showPlaylist": "Hiện playlist",
+    "removePlaylist": "Xóa playlist"
+  }
+}

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { AppLayout } from "././components/layout";
 import "./App.css";
 import ResponsiveHandler from "./components/responsive-handler/ResponsiveHandler";
+import { ToggleLanguage } from "./components/ui";
 import { MobilePlaylistToggle, PlaylistToggle } from "./features/play-list";
 import { UploadModal, UploadModalButton } from "./features/upload";
 import { VideoList } from "./features/video-list/";
@@ -28,6 +29,7 @@ function App() {
       <AppLayout
         sidebarContent={
           <>
+            <ToggleLanguage />
             <VideoList /> <PlaylistToggle />
             <UploadModalButton />
           </>

@@ -3,6 +3,7 @@ import { useUIStore } from "@/stores/useUIStore";
 import { useVideoStore } from "@/stores/useVideoStore";
 import { formatSize } from "@/utils/formatSize";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./UploadModal.module.css";
 
 export function UploadModal() {
@@ -26,6 +27,7 @@ export function UploadModal() {
 
   const { fetchVideoList, videos } = useVideoStore();
   const { showUploadModal, setShowUploadModal } = useUIStore();
+  const { t } = useTranslation();
 
   // Extract uniqued values from existing metadata
   const artists = [
@@ -224,7 +226,7 @@ export function UploadModal() {
             <>
               <div className={styles.uploadIcon}>📁</div>
               <p className={styles.dropText}>
-                {isDragging ? "Thả file vào đây..." : "Kéo & thả video vào đây"}
+                {isDragging ? t("upload.dropHint") : t("upload.dragDropLabel")}
               </p>
               <p className={styles.orText}>hoặc</p>
               <button
@@ -232,22 +234,20 @@ export function UploadModal() {
                 className={styles.browseBtn}
                 onClick={handleBrowseClick}
               >
-                📂 Chọn file từ máy
+                {t("upload.chooseFile")}
               </button>
-              <p className={styles.hint}>Hỗ trợ: MP4, WebM, OGG, MOV</p>
+              <p className={styles.hint}>{t("upload.supportedFormats")}</p>
             </>
           )}
         </div>
 
         {/* Metadata Section */}
         <div className={styles.metadataSection}>
-          <h3 className={styles.sectionTitle}>
-            📝 Thông tin bổ sung (tùy chọn)
-          </h3>
+          <h3 className={styles.sectionTitle}>{t("upload.metadataTitle")}</h3>
 
           {/* Artist */}
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Nghệ sĩ / Ca sĩ</label>
+            <label className={styles.label}>{t("upload.artist")}</label>
             <div className={styles.autocompleteWrapper}>
               <input
                 type="text"
@@ -260,7 +260,7 @@ export function UploadModal() {
                 onBlur={() =>
                   setTimeout(() => setShowArtistSuggestions(false), 200)
                 }
-                placeholder="Nhập tên nghệ sĩ..."
+                placeholder={t("upload.artistPlaceholder")}
                 className={styles.input}
                 disabled={uploading}
               />
@@ -286,7 +286,7 @@ export function UploadModal() {
 
           {/* Author */}
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Tác giả / Creator</label>
+            <label className={styles.label}>{t("upload.creator")}</label>
             <div className={styles.autocompleteWrapper}>
               <input
                 type="text"
@@ -299,7 +299,7 @@ export function UploadModal() {
                 onBlur={() =>
                   setTimeout(() => setShowAuthorSuggestions(false), 200)
                 }
-                placeholder="Nhập tên tác giả..."
+                placeholder={t("upload.creatorPlaceholder")}
                 className={styles.input}
                 disabled={uploading}
               />
@@ -325,7 +325,7 @@ export function UploadModal() {
 
           {/* Genre */}
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Thể loại</label>
+            <label className={styles.label}>{t("upload.genre")}</label>
             <div className={styles.autocompleteWrapper}>
               <input
                 type="text"
@@ -338,7 +338,7 @@ export function UploadModal() {
                 onBlur={() =>
                   setTimeout(() => setShowGenreSuggestions(false), 200)
                 }
-                placeholder="Nhập thể loại..."
+                placeholder={t("upload.genrePlaceholder")}
                 className={styles.input}
                 disabled={uploading}
               />
@@ -373,7 +373,7 @@ export function UploadModal() {
               />
             </div>
             <p className={styles.progressText}>
-              Đang upload... {uploadProgress}%
+              {t("upload.uploading")} {uploadProgress}%
             </p>
           </div>
         )}
@@ -386,14 +386,14 @@ export function UploadModal() {
             onClick={handleCloseModal}
             disabled={uploading}
           >
-            Hủy
+            {t("upload.cancel")}
           </button>
           <button
             type="submit"
             className={`${styles.submitBtn} ${!file || uploading ? styles.submitBtnDisabled : {}}`}
             disabled={!file || uploading}
           >
-            {uploading ? "⏳ Uploading..." : "🚀 Upload Video"}
+            {uploading ? t("upload.uploading") : t("upload.upload")}
           </button>
         </div>
       </form>

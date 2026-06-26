@@ -1,0 +1,52 @@
+{
+  "app": {
+    "title": "FolVid",
+    "videoCount": "{{count}} videos in folder",
+    "nowPlaying": "Now playing:",
+    "selectVideo": "👈 Select a video from the list",
+    "speed": "Speed:"
+  },
+  "videoList": {
+    "header": "📁 FolVid",
+    "createPlaylist": "Create Playlist",
+    "uploadVideo": "📤 Upload Video",
+    "hlsEnabled": "🔴 Using HLS Streaming",
+    "hlsDisabled": "⭕ Direct file playback",
+    "hlsEnabledTooltip": "Video is split into small segments (10s). The browser only loads the segment being watched, allowing fast seeking and saving bandwidth. Recommended for long videos.",
+    "hlsDisabledTooltip": "The entire video file is loaded into the browser. Best for short videos (< 2 min) as it starts instantly with no segment processing.",
+    "searchPlaceholder": "🔍 Search by name, artist..."
+  },
+  "filter": {
+    "title": "⚙️ Advanced Filters",
+    "genre": "Genre",
+    "artist": "Artist",
+    "minDuration": "Min (minutes)",
+    "maxDuration": "Max (minutes)",
+    "resolution": "Resolution",
+    "clearFilters": "Clear Filters",
+    "all": "- All -"
+  },
+  "upload": {
+    "dropHint": "Drop file here...",
+    "dragDropLabel": "Drag & drop video here",
+    "chooseFile": "📂 Choose file from computer",
+    "or": "or",
+    "supportedFormats": "Supported: MP3, MP4, WebM, OGG, MOV",
+    "invalidFileError": "Please select a valid video file!",
+    "metadataTitle": "📝 Additional info (optional)",
+    "artist": "Artist / Singer",
+    "artistPlaceholder": "Enter artist name...",
+    "creator": "Creator / Author",
+    "creatorPlaceholder": "Enter creator name...",
+    "genre": "Genre",
+    "genrePlaceholder": "Enter genre",
+    "cancel": "Cancel",
+    "uploading": "⏳ Uploading...",
+    "upload": "🚀 Upload Video"
+  },
+  "playlist": {
+    "hidePlaylist": "Hide playlist",
+    "showPlaylist": "Show playlist",
+    "removePlaylist": "Remove playlist"
+  }
+}

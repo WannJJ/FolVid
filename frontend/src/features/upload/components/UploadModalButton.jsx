@@ -1,6 +1,8 @@
 import { useUIStore } from "@/stores/useUIStore";
+import { useTranslation } from "react-i18next";
 
 export function UploadModalButton() {
+  const { t } = useTranslation();
   const { setShowUploadModal } = useUIStore();
   return (
     <div
@@ -29,7 +31,7 @@ export function UploadModalButton() {
           transition: "all 0.2s",
         }}
       >
-        📤 Upload Video
+        {t("videoList.uploadVideo")}
       </button>
     </div>
   );

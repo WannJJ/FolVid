@@ -1,3 +1,26 @@
+.filterWrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-rows 0.35s ease,
+    opacity 0.35s ease;
+  opacity: 0;
+  margin-top: 8px;
+  background: #252525;
+  border-radius: 8px;
+}
+.filterWrapper.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.filterInner {
+  overflow: hidden;
+  padding: 0 16px; /* padding ngang luôn giữ, chỉ cần tránh tràn */
+}
+.filterWrapper.open .filterInner {
+  padding: 16px;
+}
+
 .filterToggle {
   width: 100%;
   text-align: left;

@@ -3,8 +3,9 @@ import usePlaylistStore from "@/stores/usePlaylistStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { useVideoStore } from "@/stores/useVideoStore";
 import { formatTime } from "@/utils/formatTime";
-import { Repeat2, Shuffle } from "lucide-react";
+import { Repeat2, Shuffle, SkipBack, SkipForward } from "lucide-react";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { PlaylistItem } from "./PlaylistItem";
 import styles from "./PlaylistPanel.module.css";
 
@@ -26,6 +27,7 @@ export function PlaylistPanel() {
   } = usePlaylistStore();
 
   const { setCurrentVideo } = useVideoStore();
+  const { t } = useTranslation();
 
   // UI state
   const isPlaylistOpen = useUIStore((state) => state.isPlaylistOpen);
@@ -39,6 +41,17 @@ export function PlaylistPanel() {
       setCurrentVideo(current);
     }
   }, [playlist, currentIndex, getCurrentVideo, setCurrentVideo]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      // Chỉ prevent nếu click vào vùng của playlist
+      if (e.target.closest(`.${styles.playlistPanel}`)) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("contextmenu", handler);
+    return () => document.removeEventListener("contextmenu", handler);
+  }, []);
 
   if (playlist === null) return null;
 
@@ -65,14 +78,18 @@ export function PlaylistPanel() {
             <button
               className={styles.btnTogglePlaylist}
               onClick={togglePlaylist}
-              title={isPlaylistOpen ? "Ẩn playlist" : "Hiện playlist"}
+              title={
+                isPlaylistOpen
+                  ? t("playlist.hidePlaylist")
+                  : t("playlist.showPlaylist")
+              }
             >
               {isPlaylistOpen ? "▶" : "◀"}
             </button>
             <button
               className={styles.btnDeletePlaylist}
               onClick={deletePlaylist}
-              title="Xóa playlist"
+              title={t("playlist.removePlaylist")}
             >
               🗑️
             </button>
@@ -85,6 +102,7 @@ export function PlaylistPanel() {
             <button
               className={`${styles.ctrlBtn} ${isShuffle ? styles.active : ""}`}
               onClick={toggleShuffle}
+              title="Shuffle"
             >
               <Shuffle />
             </button>
@@ -92,8 +110,9 @@ export function PlaylistPanel() {
               className={styles.ctrlBtn}
               onClick={playPrevious}
               disabled={currentIndex <= 0}
+              title="Play Previous"
             >
-              ⏮
+              <SkipBack />
             </button>
             <button
               className={styles.ctrlBtn}
@@ -101,12 +120,15 @@ export function PlaylistPanel() {
               disabled={
                 currentIndex >= playlist.length - 1 && !isRepeat && !isShuffle
               }
+              title="Play Next"
             >
-              ⏭
+              <SkipForward />
             </button>
+
             <button
               className={`${styles.ctrlBtn} ${isRepeat ? styles.active : ""}`}
               onClick={toggleRepeat}
+              title="Repeat"
             >
               <Repeat2 />
             </button>
