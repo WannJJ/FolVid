@@ -70,7 +70,7 @@ export const videoApi = {
     if (!metaRes.ok) throw new Error("Lưu metadata thất bại");
   },
 
-  getStorboardData: async (videoName) => {
+  getStoryboardData: async (videoName) => {
     const baseName = videoName.replace(/\.[^/.]+$/, "");
     const res = await fetch(
       `${API_BASE_URL}/cache/storyboard/${baseName}.storyboard.json`,

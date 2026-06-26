@@ -12,7 +12,7 @@ export function useStoryboard(video) {
       }
 
       try {
-        const sbData = await videoApi.getStorboardData(video.filename);
+        const sbData = await videoApi.getStoryboardData(video.filename);
         setData(sbData);
       } catch (err) {
         console.error("Storyboard load error:", err);
