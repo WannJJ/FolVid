@@ -43,6 +43,7 @@ coverage/
 # Videos folder — DO NOT commit media files
 backend/videos/*
 !backend/videos/.gitkeep
+!backend/videos/README.md
 
 backend/cache/info/*
 backend/cache/thumbs/*
