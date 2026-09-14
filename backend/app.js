@@ -2,21 +2,205 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
+const multer = require("multer");
+
+const {
+  VIDEO_DIR,
+  CACHE_DIR,
+  THUMB_DIR,
+  INFO_DIR,
+  STORYBOARD_DIR,
+  HLS_DIR,
+  VIDEO_EXTS,
+} = require("./config");
 
 const app = express();
-const VIDEO_DIR = path.join(__dirname, "videos");
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, VIDEO_DIR);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+
+const upload = multer({
+  storage, // storage đã cấu hình trước đó
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (VIDEO_EXTS.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Định dạng file không được hỗ trợ: " + ext), false);
+    }
+  },
+  limits: {
+    fileSize: 500 * 1024 * 1024, // 500MB
+  },
+});
+
+// Cho phép frontend (chạy ở port khác) gọi API đến backend
 app.use(cors());
+app.use(express.json());
+
+// Dùng phục vụ file video tĩnh qua URL: http://localhost:4000/videos/ten-file.mp4
 app.use("/videos", express.static(VIDEO_DIR));
 
+// Phục vụ file HLS (quan trọng: phải set đúng MIME type)
+app.use(
+  "/hls",
+  express.static(HLS_DIR, {
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith(".m3u8")) {
+        res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
+      } else if (filepath.endsWith(".ts")) {
+        res.setHeader("Content-Type", "video/mp2t");
+      }
+    },
+  }),
+);
+
+// Phục vụ ảnh thumbnail tĩnh
+app.use("/cache/thumbs", express.static(THUMB_DIR));
+
+// Phục vụ storyboard, dùng để seek preview
+app.use("/cache/storyboard", express.static(STORYBOARD_DIR));
+
+// API trả về danh sách video trong thư mục videos/
 app.get("/api/videos", (req, res) => {
-  fs.readdir(VIDEO_DIR, (err, files) => {
-    if (err) return res.status(500).json({ error: "Lỗi đọc thư mục" });
-    const videoExts = [".mp4", ".webm", ".ogg", ".mov"];
-    const videos = files.filter((f) =>
-      videoExts.includes(path.extname(f).toLowerCase()),
-    );
-    res.json(videos);
+  if (!fs.existsSync(INFO_DIR)) {
+    return res.json([]);
+  }
+
+  // Đọc trực tiếp thư mục videos để biết chính xác file nào đang tồn tại
+  const files = fs.readdirSync(VIDEO_DIR).filter((file) => {
+    return VIDEO_EXTS.includes(path.extname(file).toLowerCase());
+  });
+
+  const videos = files.map((file) => {
+    const infoPath = path.join(INFO_DIR, file + ".json");
+    const videoPath = path.join(VIDEO_DIR, file);
+
+    // Nếu đã có cache và hợp lệ → dùng cache
+    if (fs.existsSync(infoPath)) {
+      try {
+        const cached = JSON.parse(fs.readFileSync(infoPath, "utf8"));
+        // Đảm bảo file trong cache đúng là file đang tồn tại (tránh trường hợp rename ngoài ý muốn)
+        if (cached.filename === file) {
+          return cached;
+        }
+      } catch {
+        // ignore broken JSON
+      }
+    }
+
+    // Fallback: file chưa có cache (vừa đổi tên, vừa thêm, hoặc chưa chạy scan.js)
+    // Vẫn trả về để client biết và phát được, chỉ thiếu thumbnail/metadata đầy đủ
+    const stat = fs.statSync(videoPath);
+    return {
+      filename: file,
+      url: `/videos/${file}`,
+      thumb: null,
+      width: null,
+      height: null,
+      duration: 0,
+      size: stat.size,
+      bitrate: null,
+      custom: { artist: "", author: "", genre: "" },
+    };
+  });
+
+  res.json(videos);
+});
+
+// API trả về danh sách video có HLS sẵn
+app.get("/api/videos/hls", (req, res) => {
+  fs.readdir(HLS_DIR, (err, folders) => {
+    if (err) return res.status(500).json({ error: "Lỗi đọc thư mục HLS" });
+    const hlsVideos = folders.filter((folder) => {
+      return fs.existsSync(path.join(HLS_DIR, folder, "index.m3u8"));
+    });
+    res.json(hlsVideos);
+  });
+});
+
+app.post("/api/upload", (req, res, next) => {
+  upload.single("video")(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({ error: "File quá lớn. Giới hạn 500MB." });
+      }
+      return res.status(400).json({ error: "Lỗi upload: " + err.message });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Không có file nào được gửi lên" });
+    }
+
+    res.json({ message: "Upload thành công", filename: req.file.filename });
+  });
+});
+
+// Helper: lấy đường dẫn file .meta.json tương ứng với video
+const getMetaPath = (videoFilename) => {
+  const baseName = path.parse(videoFilename).name;
+  return path.join(VIDEO_DIR, `${videoFilename}.meta.json`);
+};
+
+// Save metadata
+app.post("/api/metadata", (req, res) => {
+  const { filename, artist, author, genre, uploadedAt } = req.body;
+
+  if (!filename) {
+    return res.status(400).json({ error: "Filename required" });
+  }
+
+  const metadata = {
+    filename,
+    artist: artist || null,
+    author: author || null,
+    genre: genre || null,
+    uploadedAt: uploadedAt || new Date().toISOString(),
+  };
+
+  const metaPath = getMetaPath(filename);
+
+  fs.writeFile(metaPath, JSON.stringify(metadata, null, 2), (err) => {
+    if (err) {
+      return res.status(500).json({ error: "Lỗi lưu metadata" });
+    }
+    res.json({ success: true, metadata });
+  });
+});
+
+// Sửa file name
+app.put("/api/videos/:filename", (req, res) => {
+  const oldName = req.params.filename;
+  const { newName } = req.body;
+
+  if (!newName || newName.includes("/") || newName.includes("\\")) {
+    return res.status(400).json({ error: "Tên file không hợp lệ" });
+  }
+
+  const oldPath = path.join(VIDEO_DIR, oldName);
+  const newPath = path.join(VIDEO_DIR, newName);
+
+  // Kiểm tra file cũ có tồn tại không
+  if (!fs.existsSync(oldPath)) {
+    return res.status(404).json({ error: "File không tồn tại" });
+  }
+
+  // Kiểm tra file mới đã tồn tại chưa (tránh ghi đè)
+  if (fs.existsSync(newPath)) {
+    return res.status(409).json({ error: "Tên file mới đã tồn tại" });
+  }
+
+  fs.rename(oldPath, newPath, (err) => {
+    if (err) return res.status(500).json({ error: "Không đổi được tên" });
+    res.json({ message: "Đổi tên thành công", newName });
   });
 });
 
