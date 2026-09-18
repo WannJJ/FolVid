@@ -1,47 +1,177 @@
 const request = require("supertest");
-const app = require("../app");
-const fs = require("fs");
+const mockFs = require("mock-fs");
 const path = require("path");
+const fs = require("fs");
 
-const VIDEO_DIR = path.join(__dirname, "../videos");
+// --- 1. Mock config TRƯỚC KHI require app ---
+// Để app.js dùng đường dẫn ảo thay vì đường dẫn thật trên máy
+const mockTestRoot = path.join(__dirname, "..", "test-temp");
 
-// Helper: dọn dẹp thư mục videos trước mỗi test
-beforeEach(() => {
-  // Xóa hết file trong videos/ test (nếu cần)
-  // Hoặc đơn giản hơn: tạo thư mục `videos/` nếu chưa có
-  if (!fs.existsSync(VIDEO_DIR)) {
-    fs.mkdirSync(VIDEO_DIR);
-  }
+jest.mock("../config", () => {
+  const p = require("path");
+  return {
+    VIDEO_DIR: p.join(mockTestRoot, "videos"),
+    CACHE_DIR: p.join(mockTestRoot, "cache"),
+    THUMB_DIR: p.join(mockTestRoot, "cache", "thumbs"),
+    INFO_DIR: p.join(mockTestRoot, "cache", "info"),
+    STORYBOARD_DIR: p.join(mockTestRoot, "cache", "storyboard"),
+    HLS_DIR: p.join(mockTestRoot, "hls"),
+    VIDEO_EXTS: [".mp4", ".webm", ".ogg", ".mov"],
+  };
 });
 
-describe("GET /api/videos", () => {
-  test("trả về mảng rỗng khi không có video", async () => {
-    // Đảm bảo thư mục trống
-    const res = await request(app).get("/api/videos");
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual([]);
-    expect(Array.isArray(res.body)).toBe(true);
+const app = require("../app");
+
+// Helper tạo buffer giả lập file MP4 (để multer nhận diện qua magic bytes)
+function fakeMp4Buffer(size = 1024) {
+  const buf = Buffer.alloc(size);
+  // ftyp box signature giúp một số tool nhận diện, nhưng với test này
+  // chỉ cần buffer bất kỳ vì multer của ta lọc theo extname
+  buf.write("ftyp", 4);
+  return buf;
+}
+
+describe("FolVid Backend API", () => {
+  afterEach(() => {
+    mockFs.restore();
   });
 
-  test("chỉ trả về file có đuôi video", async () => {
-    // Tạo file giả lập
-    fs.writeFileSync(path.join(VIDEO_DIR, "phim1.mp4"), "fake video");
-    fs.writeFileSync(path.join(VIDEO_DIR, "readme.txt"), "not a video");
+  // ==========================================
+  // GET /api/videos
+  // ==========================================
+  describe("GET /api/videos", () => {
+    test("trả về mảng rỗng nếu INFO_DIR không tồn tại", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {
+          "clip.mp4": fakeMp4Buffer(),
+        },
+        // Không tạo INFO_DIR
+      });
 
-    const res = await request(app).get("/api/videos");
-    expect(res.body).toContain("phim1.mp4");
-    expect(res.body).not.toContain("readme.txt");
-    expect(res.body.length).toBe(1);
+      const res = await request(app).get("/api/videos");
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
 
-    // Dọn dẹp
-    fs.unlinkSync(path.join(VIDEO_DIR, "phim1.mp4"));
-    fs.unlinkSync(path.join(VIDEO_DIR, "readme.txt"));
+    test("trả về danh sách từ cache nếu JSON hợp lệ và khớp filename", async () => {
+      const cachedData = {
+        filename: "movie.mp4",
+        url: "/videos/movie.mp4",
+        thumb: "/cache/thumbs/movie.jpg",
+        width: 1920,
+        height: 1080,
+        duration: 120,
+        size: 5000000,
+        bitrate: 5000,
+        custom: { artist: "A", author: "B", genre: "C" },
+      };
+
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {
+          "movie.mp4": fakeMp4Buffer(5000),
+          "readme.txt": "abc",
+        },
+        [path.join(mockTestRoot, "cache", "info")]: {
+          "movie.mp4.json": JSON.stringify(cachedData),
+        },
+      });
+
+      const res = await request(app).get("/api/videos");
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0]).toMatchObject(cachedData);
+    });
+
+    test("trả về fallback nếu cache filename không khớp (đổi tên ngoài ý muốn)", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {
+          "new-name.mp4": fakeMp4Buffer(2048),
+        },
+        [path.join(mockTestRoot, "cache", "info")]: {
+          "new-name.mp4.json": JSON.stringify({ filename: "old-name.mp4" }),
+        },
+      });
+
+      const res = await request(app).get("/api/videos");
+      expect(res.status).toBe(200);
+      expect(res.body[0].filename).toBe("new-name.mp4");
+      expect(res.body[0].duration).toBe(0);
+      expect(res.body[0].size).toBe(2048);
+    });
+
+    test("trả về fallback nếu file JSON bị hỏng (catch parse error)", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {
+          "corrupt.mp4": fakeMp4Buffer(1000),
+        },
+        [path.join(mockTestRoot, "cache", "info")]: {
+          "corrupt.mp4.json": "this is not json {",
+        },
+      });
+
+      const res = await request(app).get("/api/videos");
+      expect(res.status).toBe(200);
+      expect(res.body[0].filename).toBe("corrupt.mp4");
+      expect(res.body[0].size).toBe(1000);
+    });
+
+    test("chỉ lọc file có đuôi video, bỏ qua ảnh và txt", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {
+          "a.mp4": fakeMp4Buffer(100),
+          "b.webm": fakeMp4Buffer(200),
+          "photo.jpg": "fake-image",
+          "note.txt": "hello",
+        },
+        [path.join(mockTestRoot, "cache", "info")]: {},
+      });
+
+      const res = await request(app).get("/api/videos");
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+      const names = res.body.map((v) => v.filename);
+      expect(names).toContain("a.mp4");
+      expect(names).toContain("b.webm");
+      expect(names).not.toContain("photo.jpg");
+    });
   });
-});
 
-describe("GET /videos/:filename", () => {
-  test("trả về 404 nếu file không tồn tại", async () => {
-    const res = await request(app).get("/videos/khong-ton-tai.mp4");
-    expect(res.statusCode).toBe(404);
+  // ==========================================
+  // GET /api/videos/hls
+  // ==========================================
+  describe("GET /api/videos/hls", () => {
+    test("trả về danh sách thư mục có index.m3u8", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "hls")]: {
+          vid1: {
+            "index.m3u8": "#EXTM3U\n",
+            "seg1.ts": "binary",
+          },
+          vid2: {
+            "index.m3u8": "#EXTM3U\n",
+          },
+          vid3: {
+            // không có index.m3u8
+            "seg1.ts": "binary",
+          },
+        },
+      });
+
+      const res = await request(app).get("/api/videos/hls");
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(["vid1", "vid2"]);
+    });
+
+    test("trả về 500 nếu thư mục HLS không đọc được", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "hls")]: mockFs.directory({ mode: 0 }), // không có quyền đọc
+      });
+
+      const res = await request(app).get("/api/videos/hls");
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty("error");
+    });
+  });
+
   });
 });
