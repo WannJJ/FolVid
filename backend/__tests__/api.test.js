@@ -173,5 +173,157 @@ describe("FolVid Backend API", () => {
     });
   });
 
+  // ==========================================
+  // POST /api/upload
+  // ==========================================
+  describe("POST /api/upload", () => {
+    test("upload file .mp4 thành công", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {},
+      });
+
+      const res = await request(app)
+        .post("/api/upload")
+        .attach("video", fakeMp4Buffer(2000), "my-video.mp4");
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe("Upload thành công");
+      expect(res.body.filename).toBe("my-video.mp4");
+
+      // Kiểm tra file thật sự được ghi vào mock-fs
+      const saved = fs.readFileSync(
+        path.join(mockTestRoot, "videos", "my-video.mp4"),
+      );
+      expect(saved.length).toBe(2000);
+    });
+
+    test("từ chối upload file không đúng định dạng", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {},
+      });
+
+      const res = await request(app)
+        .post("/api/upload")
+        .attach("video", Buffer.from("hello"), "virus.exe");
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/Định dạng file không được hỗ trợ/);
+    });
+
+    test("báo lỗi 400 nếu không gửi field 'video'", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {},
+      });
+
+      const res = await request(app).post("/api/upload").send({});
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/Không có file/);
+    });
+  });
+
+  // ==========================================
+  // POST /api/metadata
+  // ==========================================
+  describe("POST /api/metadata", () => {
+    test("lưu metadata thành công", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {
+          "existing.mp4": fakeMp4Buffer(),
+        },
+      });
+
+      const payload = {
+        filename: "existing.mp4",
+        artist: "Nguyễn Văn A",
+        genre: "Hành động",
+      };
+
+      const res = await request(app).post("/api/metadata").send(payload);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.metadata.artist).toBe("Nguyễn Văn A");
+
+      // Kiểm tra file .meta.json được tạo
+      const metaPath = path.join(
+        mockTestRoot,
+        "videos",
+        "existing.mp4.meta.json",
+      );
+      expect(fs.existsSync(metaPath)).toBe(true);
+    });
+
+    test("trả 400 nếu thiếu filename", async () => {
+      const res = await request(app)
+        .post("/api/metadata")
+        .send({ artist: "A" });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe("Filename required");
+    });
+  });
+
+  // ==========================================
+  // PUT /api/videos/:filename
+  // ==========================================
+  describe("PUT /api/videos/:filename", () => {
+    test("đổi tên thành công", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {
+          "old.mp4": fakeMp4Buffer(),
+        },
+      });
+
+      const res = await request(app)
+        .put("/api/videos/old.mp4")
+        .send({ newName: "new.mp4" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe("Đổi tên thành công");
+      expect(fs.existsSync(path.join(mockTestRoot, "videos", "new.mp4"))).toBe(
+        true,
+      );
+      expect(fs.existsSync(path.join(mockTestRoot, "videos", "old.mp4"))).toBe(
+        false,
+      );
+    });
+
+    test("trả 400 nếu tên mới chứa dấu /", async () => {
+      const res = await request(app)
+        .put("/api/videos/a.mp4")
+        .send({ newName: "../etc/passwd" });
+
+      expect(res.status).toBe(400);
+    });
+
+    test("trả 400 nếu thiếu newName", async () => {
+      const res = await request(app).put("/api/videos/a.mp4").send({});
+      expect(res.status).toBe(400);
+    });
+
+    test("trả 404 nếu file cũ không tồn tại", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {},
+      });
+
+      const res = await request(app)
+        .put("/api/videos/ghost.mp4")
+        .send({ newName: "real.mp4" });
+
+      expect(res.status).toBe(404);
+    });
+
+    test("trả 409 nếu tên mới đã tồn tại", async () => {
+      mockFs({
+        [path.join(mockTestRoot, "videos")]: {
+          "a.mp4": fakeMp4Buffer(),
+          "b.mp4": fakeMp4Buffer(),
+        },
+      });
+
+      const res = await request(app)
+        .put("/api/videos/a.mp4")
+        .send({ newName: "b.mp4" });
+
+      expect(res.status).toBe(409);
+    });
   });
 });
